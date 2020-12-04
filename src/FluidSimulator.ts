@@ -1,10 +1,10 @@
 import * as twgl from 'twgl.js';
 
-import createTexture from './createTexture';
+import { createScalarTexture, createVec2Texture } from './createTexture';
 
 const basicVertShader = require('./shaders/basic.vert');
 const velocityFragShader = require('./shaders/velocityTexture.frag');
-const densityFragShader = require('./shaders/velocityTexture.frag');
+const densityFragShader = require('./shaders/densityTexture.frag');
 
 /**
  * FluidSimulator class
@@ -36,41 +36,33 @@ export default class FluidSimulator {
         const { width, height } = this;
         const numCells = width * height;
 
-        this.velocityTexture = createTexture(this.gl, {
-            internalFormat: this.gl.RGB,
-            format: this.gl.RGB,
-            type: this.gl.FLOAT,
+        this.velocityTexture = createVec2Texture(
+            this.gl,
             width,
             height, 
-            src: new Float32Array(numCells * 3).fill(0).map(_ => Math.random()),
-        });
+            new Float32Array(numCells * 2).fill(0).map(_ => Math.random())
+        );
 
-        this.tempVelocityTexture = createTexture(this.gl, {
-            internalFormat: this.gl.RGB,
-            format: this.gl.RGB,
-            type: this.gl.FLOAT,
+        this.tempVelocityTexture = createVec2Texture(
+            this.gl,
             width,
             height, 
-            src: new Float32Array(numCells * 3).fill(0),
-        });
+            new Float32Array(numCells * 2).fill(0)
+        );
         
-        this.pressureTexture = createTexture(this.gl, {
-            internalFormat: this.gl.LUMINANCE,
-            format: this.gl.LUMINANCE,
-            type: this.gl.FLOAT,
+        this.pressureTexture = createScalarTexture(
+            this.gl,
             width,
             height,
-            src: new Float32Array(numCells).fill(0),
-        });
+            new Float32Array(numCells).fill(0)
+        );
 
-        this.densityTexture = createTexture(this.gl, {
-            internalFormat: this.gl.LUMINANCE,
-            format: this.gl.LUMINANCE,
-            type: this.gl.FLOAT,
+        this.densityTexture = createScalarTexture(
+            this.gl,
             width,
             height,
-            src: new Float32Array(numCells).fill(0).map(_ => Math.random()),
-        });
+            new Float32Array(numCells).fill(0).map(_ => Math.random())
+        );
     }
 
     /**
