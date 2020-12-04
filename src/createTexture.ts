@@ -7,6 +7,11 @@ interface createTextureOptions {
     src: any;
 }
 
+/**
+ * Creates a 2D texture based on the given options
+ * @param gl 
+ * @param opt 
+ */
 export default function createTexture(gl: any, opt: createTextureOptions) {
     const texture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, texture);

@@ -5,6 +5,10 @@ import createTexture from './createTexture';
 const basicVertShader = require('./shaders/basic.vert');
 const basicFragShader = require('./shaders/basic.frag');
 
+/**
+ * FluidSimulator class
+ * Simulates fluids in 2D using a Eulerian approach on the GPU
+ */
 export default class FluidSimulator {
     bufferInfo: twgl.BufferInfo;
     velocityTexture: number;
@@ -21,6 +25,7 @@ export default class FluidSimulator {
         this.createPrograms();
     }
 
+    // create GPU texture objects
     createTextures() {
         const { width, height } = this;
         const numCells = width * height;
@@ -44,14 +49,16 @@ export default class FluidSimulator {
         });
     }
 
+    // create GLSL programs
     createPrograms() {
         this.programInfo = twgl.createProgramInfo(this.gl, [basicVertShader, basicFragShader]);
     }
 
+    // run simulation update logic
     update(time: number) {
-
     }
 
+    // draw current state of simulation
     draw(time: number) {
         const uniforms = {
             time: time * 0.001,
