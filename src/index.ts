@@ -1,14 +1,10 @@
 import * as twgl from 'twgl.js';
 
+import createContext from './createContext';
+import createTexture from './createTexture';
 import getSimulationDimensions from './getSimulationDimensions';
 
-// create WebGL context with required extensions
-const gl = (document.getElementById('webgl-canvas') as any).getContext('webgl');
-const floatTextures = gl.getExtension('OES_texture_float');
-if (!floatTextures) {
-    alert('no floating point texture support, please update your browser');
-}
-const floatTexturesLinear = gl.getExtension('OES_texture_float_linear');
+const gl = createContext();
 
 // load shaders
 const basicVertShader = require('./shaders/basic.vert');
@@ -26,14 +22,14 @@ console.log(width, height)
 const numCells = width * height;
 
 // create textures
-const velocityTexture = gl.createTexture();
-gl.bindTexture(gl.TEXTURE_2D, velocityTexture);
-gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, width, height, 0, gl.RGB, gl.FLOAT, new Float32Array(numCells * 3).fill(0).map(_ => Math.random()));
-gl.generateMipmap(gl.TEXTURE_2D);
-gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-
-console.log(velocityTexture);
+const velocityTexture = createTexture(gl, {
+    internalFormat: gl.RGB,
+    format: gl.RGB,
+    type: gl.FLOAT,
+    width,
+    height, 
+    src: new Float32Array(numCells * 3).fill(0).map(_ => Math.random()),
+});
 
 function render(time: number) {
     twgl.resizeCanvasToDisplaySize(gl.canvas);
