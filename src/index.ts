@@ -1,7 +1,7 @@
 import * as twgl from 'twgl.js';
 
 import createContext from './createContext';
-import createTexture from './createTexture';
+import createFluidTextures from './createFluidTextures';
 import getSimulationDimensions from './getSimulationDimensions';
 
 const gl = createContext();
@@ -19,17 +19,9 @@ const bufferInfo = twgl.createBufferInfoFromArrays(gl, arrays);
 // fixed for now
 const { width, height } = getSimulationDimensions(gl.canvas.width, gl.canvas.height);
 console.log(width, height)
-const numCells = width * height;
 
 // create textures
-const velocityTexture = createTexture(gl, {
-    internalFormat: gl.RGB,
-    format: gl.RGB,
-    type: gl.FLOAT,
-    width,
-    height, 
-    src: new Float32Array(numCells * 3).fill(0).map(_ => Math.random()),
-});
+const { pressureTexture, velocityTexture } = createFluidTextures(gl, width, height);
 
 function render(time: number) {
     twgl.resizeCanvasToDisplaySize(gl.canvas);
