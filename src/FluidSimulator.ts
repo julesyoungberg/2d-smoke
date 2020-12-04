@@ -18,6 +18,8 @@ export default class FluidSimulator {
     densityTexture: number;
     renderVelocityProg: twgl.ProgramInfo;
     renderDensityProg: twgl.ProgramInfo;
+    prevTime: number = 0;
+    timeStep: number = 0;
 
     constructor(readonly gl: any, readonly width: number, readonly height: number) {
         const arrays = {
@@ -77,14 +79,20 @@ export default class FluidSimulator {
      * run simulation update logic
      */
     update(time: number) {
+        this.timeStep = time - this.prevTime;
+        this.prevTime = time;
+    }
+
+    getTime() {
+        return this.prevTime + this.timeStep;
     }
 
     /**
      * draw velocity texture
      */
-    drawVelocity(time: number) {
+    drawVelocity() {
         const uniforms = {
-            time: time * 0.001,
+            time: this.getTime() * 0.001,
             resolution: [this.gl.canvas.width, this.gl.canvas.height],
             velocityTexture: this.velocityTexture,
         };
@@ -98,9 +106,9 @@ export default class FluidSimulator {
     /**
      * draw density texture
      */
-    drawDensity(time: number) {
+    drawDensity() {
         const uniforms = {
-            time: time * 0.001,
+            time: this.getTime() * 0.001,
             resolution: [this.gl.canvas.width, this.gl.canvas.height],
             densityTexture: this.densityTexture,
         };
@@ -114,7 +122,7 @@ export default class FluidSimulator {
     /** 
      * draw current state of simulation
      */
-    draw(time: number) {
-        this.drawDensity(time);
+    draw() {
+        this.drawDensity();
     }
 }

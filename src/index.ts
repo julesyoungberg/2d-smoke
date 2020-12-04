@@ -16,7 +16,7 @@ function render(time: number) {
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
     fluidSimulator.update(time);
-    fluidSimulator.draw(time);
+    fluidSimulator.draw();
 
     requestAnimationFrame(render);
 }
