@@ -44,6 +44,8 @@ export default class FluidSimulator {
         ]);
 
         this.framebuffer = this.gl.createFramebuffer();
+        // gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer);
+        // https://webgl2fundamentals.org/webgl/lessons/webgl-render-to-texture.html
     }
 
     /**
