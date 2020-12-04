@@ -1,6 +1,6 @@
 import * as twgl from 'twgl.js';
 
-import { createScalarTexture, createVec2Texture } from './createTexture';
+import { buildScalarTexture, buildVec2Texture } from './buildTexture';
 
 const basicVertShader = require('./shaders/basic.vert');
 const velocityFragShader = require('./shaders/velocityTexture.frag');
@@ -49,13 +49,13 @@ export default class FluidSimulator {
     }
 
     /**
-     * create GPU texture objects
+     * build GPU texture buffers
      */
-    setupTextures() {
+    buildTextures() {
         const { width, height } = this;
         const numCells = width * height;
 
-        createVec2Texture(
+        buildVec2Texture(
             this.gl,
             this.velocityTexture,
             width,
@@ -63,9 +63,9 @@ export default class FluidSimulator {
             new Float32Array(numCells * 2).fill(0).map((_) => Math.random())
         );
 
-        createVec2Texture(this.gl, this.tempVelocityTexture, width, height, null);
+        buildVec2Texture(this.gl, this.tempVelocityTexture, width, height, null);
 
-        createScalarTexture(
+        buildScalarTexture(
             this.gl,
             this.pressureTexture,
             width,
@@ -73,7 +73,7 @@ export default class FluidSimulator {
             new Float32Array(numCells).fill(0)
         );
 
-        createScalarTexture(
+        buildScalarTexture(
             this.gl,
             this.densityTexture,
             width,
@@ -81,11 +81,11 @@ export default class FluidSimulator {
             new Float32Array(numCells).fill(0).map((_) => Math.random())
         );
 
-        createScalarTexture(this.gl, this.tempDensityTexture, width, height, null);
+        buildScalarTexture(this.gl, this.tempDensityTexture, width, height, null);
     }
 
     setup() {
-        this.setupTextures();
+        this.buildTextures();
     }
 
     /**

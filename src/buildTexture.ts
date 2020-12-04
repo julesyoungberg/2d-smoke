@@ -1,4 +1,4 @@
-interface createTextureOptions {
+interface buildTextureOptions {
     internalFormat: number;
     format: number;
     type: number;
@@ -8,12 +8,12 @@ interface createTextureOptions {
 }
 
 /**
- * Creates a 2D texture based on the given options
+ * Builds a 2D texture based on the given options.
  * @param gl
  * @param textureID
  * @param opt
  */
-export default function createTexture(gl: any, textureID: number, opt: createTextureOptions) {
+export default function buildTexture(gl: any, textureID: number, opt: buildTextureOptions) {
     gl.bindTexture(gl.TEXTURE_2D, textureID);
     gl.texImage2D(
         gl.TEXTURE_2D,
@@ -35,21 +35,21 @@ export default function createTexture(gl: any, textureID: number, opt: createTex
 }
 
 /**
- * Creates a 2D texture of scalars
+ * Builds a 2D texture of scalars
  * @param gl
  * @param textureID
  * @param width
  * @param height
  * @param src
  */
-export function createScalarTexture(
+export function buildScalarTexture(
     gl: any,
     textureID: number,
     width: number,
     height: number,
     src: any
 ) {
-    return createTexture(gl, textureID, {
+    return buildTexture(gl, textureID, {
         internalFormat: gl.LUMINANCE,
         format: gl.LUMINANCE,
         type: gl.FLOAT,
@@ -60,21 +60,21 @@ export function createScalarTexture(
 }
 
 /**
- * Creates a 2D texture of vec2s
+ * Builds a 2D texture of vec2s
  * @param gl
  * @param textureID
  * @param width
  * @param height
  * @param src
  */
-export function createVec2Texture(
+export function buildVec2Texture(
     gl: any,
     textureID: number,
     width: number,
     height: number,
     src: any
 ) {
-    return createTexture(gl, textureID, {
+    return buildTexture(gl, textureID, {
         internalFormat: gl.LUMINANCE_ALPHA,
         format: gl.LUMINANCE_ALPHA,
         type: gl.FLOAT,
@@ -85,20 +85,20 @@ export function createVec2Texture(
 }
 
 /**
- * Creates a 2D texture of vec3s
+ * Build a 2D texture of vec3s
  * @param gl
  * @param width
  * @param height
  * @param src
  */
-export function createVec3Texture(
+export function buildVec3Texture(
     gl: any,
     textureID: number,
     width: number,
     height: number,
     src: any
 ) {
-    return createTexture(gl, textureID, {
+    return buildTexture(gl, textureID, {
         internalFormat: gl.RGB,
         format: gl.RGB,
         type: gl.FLOAT,
