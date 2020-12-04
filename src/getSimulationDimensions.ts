@@ -1,7 +1,7 @@
 /**
  * Get simulation dimensions as the nearest power of 2 of screen width and apropriately scaled height
- * @param width 
- * @param height 
+ * @param width
+ * @param height
  */
 export default function getSimulationDimensions(width: number, height: number) {
     let n = 1;

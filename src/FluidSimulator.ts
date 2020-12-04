@@ -16,6 +16,7 @@ export default class FluidSimulator {
     tempVelocityTexture: number;
     pressureTexture: number;
     densityTexture: number;
+    tempDensityTexture: number;
     renderVelocityProg: twgl.ProgramInfo;
     renderDensityProg: twgl.ProgramInfo;
     prevTime: number = 0;
@@ -32,9 +33,15 @@ export default class FluidSimulator {
         this.tempVelocityTexture = gl.createTexture();
         this.pressureTexture = gl.createTexture();
         this.densityTexture = gl.createTexture();
-        
-        this.renderVelocityProg = twgl.createProgramInfo(this.gl, [basicVertShader, velocityFragShader]);
-        this.renderDensityProg = twgl.createProgramInfo(this.gl, [basicVertShader, densityFragShader]);
+
+        this.renderVelocityProg = twgl.createProgramInfo(this.gl, [
+            basicVertShader,
+            velocityFragShader,
+        ]);
+        this.renderDensityProg = twgl.createProgramInfo(this.gl, [
+            basicVertShader,
+            densityFragShader,
+        ]);
 
         // this.simulationBuffer = this.gl.createFrameBuffer();
     }
@@ -50,18 +57,12 @@ export default class FluidSimulator {
             this.gl,
             this.velocityTexture,
             width,
-            height, 
-            new Float32Array(numCells * 2).fill(0).map(_ => Math.random())
+            height,
+            new Float32Array(numCells * 2).fill(0).map((_) => Math.random())
         );
 
-        createVec2Texture(
-            this.gl,
-            this.tempVelocityTexture,
-            width,
-            height, 
-            new Float32Array(numCells * 2).fill(0)
-        );
-        
+        createVec2Texture(this.gl, this.tempVelocityTexture, width, height, null);
+
         createScalarTexture(
             this.gl,
             this.pressureTexture,
@@ -75,8 +76,10 @@ export default class FluidSimulator {
             this.densityTexture,
             width,
             height,
-            new Float32Array(numCells).fill(0).map(_ => Math.random())
+            new Float32Array(numCells).fill(0).map((_) => Math.random())
         );
+
+        createScalarTexture(this.gl, this.tempDensityTexture, width, height, null);
     }
 
     setup() {
@@ -104,7 +107,7 @@ export default class FluidSimulator {
             resolution: [this.gl.canvas.width, this.gl.canvas.height],
             velocityTexture: this.velocityTexture,
         };
-    
+
         this.gl.useProgram(this.renderVelocityProg.program);
         twgl.setBuffersAndAttributes(this.gl, this.renderVelocityProg, this.bufferInfo);
         twgl.setUniforms(this.renderVelocityProg, uniforms);
@@ -120,14 +123,14 @@ export default class FluidSimulator {
             resolution: [this.gl.canvas.width, this.gl.canvas.height],
             densityTexture: this.densityTexture,
         };
-    
+
         this.gl.useProgram(this.renderDensityProg.program);
         twgl.setBuffersAndAttributes(this.gl, this.renderDensityProg, this.bufferInfo);
         twgl.setUniforms(this.renderDensityProg, uniforms);
         twgl.drawBufferInfo(this.gl, this.bufferInfo);
     }
 
-    /** 
+    /**
      * draw current state of simulation
      */
     draw() {

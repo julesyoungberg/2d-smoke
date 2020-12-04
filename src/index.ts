@@ -7,7 +7,7 @@ import getSimulationDimensions from './getSimulationDimensions';
 const gl = createContext();
 
 const { width, height } = getSimulationDimensions(gl.canvas.width, gl.canvas.height);
-console.log(width, height)
+console.log(width, height);
 
 const fluidSimulator = new FluidSimulator(gl, width, height);
 fluidSimulator.setup();

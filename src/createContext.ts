@@ -3,7 +3,7 @@ let floatTexturesLinear: any;
 let textureHalfFloat: any;
 let textureHalfFloatLinear: any;
 
-/** 
+/**
  * create WebGL context with required extensions
  */
 export default function createContext() {
