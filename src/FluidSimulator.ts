@@ -20,6 +20,7 @@ export default class FluidSimulator {
     renderDensityProg: twgl.ProgramInfo;
     prevTime: number = 0;
     timeStep: number = 0;
+    simulationBuffer: number;
 
     constructor(readonly gl: any, readonly width: number, readonly height: number) {
         const arrays = {
@@ -29,6 +30,8 @@ export default class FluidSimulator {
 
         this.createTextures();
         this.createPrograms();
+
+        // this.simulationBuffer = this.gl.createFrameBuffer();
     }
 
     /**
