@@ -10,6 +10,7 @@ const { width, height } = getSimulationDimensions(gl.canvas.width, gl.canvas.hei
 console.log(width, height)
 
 const fluidSimulator = new FluidSimulator(gl, width, height);
+fluidSimulator.setup();
 
 function render(time: number) {
     twgl.resizeCanvasToDisplaySize(gl.canvas);

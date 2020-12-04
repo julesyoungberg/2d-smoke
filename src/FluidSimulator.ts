@@ -28,8 +28,13 @@ export default class FluidSimulator {
         };
         this.bufferInfo = twgl.createBufferInfoFromArrays(gl, arrays);
 
-        this.createTextures();
-        this.createPrograms();
+        this.velocityTexture = gl.createTexture();
+        this.tempVelocityTexture = gl.createTexture();
+        this.pressureTexture = gl.createTexture();
+        this.densityTexture = gl.createTexture();
+        
+        this.renderVelocityProg = twgl.createProgramInfo(this.gl, [basicVertShader, velocityFragShader]);
+        this.renderDensityProg = twgl.createProgramInfo(this.gl, [basicVertShader, densityFragShader]);
 
         // this.simulationBuffer = this.gl.createFrameBuffer();
     }
@@ -37,45 +42,45 @@ export default class FluidSimulator {
     /**
      * create GPU texture objects
      */
-    createTextures() {
+    setupTextures() {
         const { width, height } = this;
         const numCells = width * height;
 
-        this.velocityTexture = createVec2Texture(
+        createVec2Texture(
             this.gl,
+            this.velocityTexture,
             width,
             height, 
             new Float32Array(numCells * 2).fill(0).map(_ => Math.random())
         );
 
-        this.tempVelocityTexture = createVec2Texture(
+        createVec2Texture(
             this.gl,
+            this.tempVelocityTexture,
             width,
             height, 
             new Float32Array(numCells * 2).fill(0)
         );
         
-        this.pressureTexture = createScalarTexture(
+        createScalarTexture(
             this.gl,
+            this.pressureTexture,
             width,
             height,
             new Float32Array(numCells).fill(0)
         );
 
-        this.densityTexture = createScalarTexture(
+        createScalarTexture(
             this.gl,
+            this.densityTexture,
             width,
             height,
             new Float32Array(numCells).fill(0).map(_ => Math.random())
         );
     }
 
-    /**
-     * create GLSL programs
-     */
-    createPrograms() {
-        this.renderVelocityProg = twgl.createProgramInfo(this.gl, [basicVertShader, velocityFragShader]);
-        this.renderDensityProg = twgl.createProgramInfo(this.gl, [basicVertShader, densityFragShader]);
+    setup() {
+        this.setupTextures();
     }
 
     /**
