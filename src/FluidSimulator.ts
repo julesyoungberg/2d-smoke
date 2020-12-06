@@ -113,13 +113,13 @@ export default class FluidSimulator {
      * advect the fluid density
      */
     runAdvectProg() {
-        bindFramebufferWithTexture(this.gl, this.simulationFramebuffer, this.width, this.height, this.tempDensityTexture);
+        bindFramebufferWithTexture(this.gl, this.simulationFramebuffer, this.width, this.height, this.tempVelocityTexture);
         
         const uniforms = {
             resolution: [this.width, this.height],
             timeStep: this.timeStep,
             velocityTexture: this.velocityTexture,
-            densityTexture: this.densityTexture,            
+            quantityTexture: this.velocityTexture,            
         };
 
         this.gl.useProgram(this.advectProgInfo.program);
@@ -127,7 +127,7 @@ export default class FluidSimulator {
         twgl.setUniforms(this.advectProgInfo, uniforms);
         this.drawQuad();
 
-        swap(this, 'densityTexture', 'tempDensityTexture');
+        swap(this, 'velocityTexture', 'tempVelocityTexture');
     }
 
     /**
@@ -184,6 +184,6 @@ export default class FluidSimulator {
         // Clear the canvas AND the depth buffer.
         this.gl.clearColor(1, 1, 1, 1);   // clear to white
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
-        this.drawDensity();
+        this.drawVelocity();
     }
 }

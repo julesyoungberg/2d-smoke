@@ -1,5 +1,3 @@
-import { bindFramebufferInfo } from "twgl.js";
-
 /**
  * Binds a framebuffer to the drawing context
  * @param gl 
