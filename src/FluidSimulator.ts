@@ -26,8 +26,9 @@ export default class FluidSimulator {
     renderVelocityProgInfo: twgl.ProgramInfo;
     renderDensityProgInfo: twgl.ProgramInfo;
     // simulation state
-    prevTime: number = 0;
-    timeStep: number = 0;
+    prevTime = 0;
+    timeStep = 0;
+    timeScale = 0.001;
 
     constructor(readonly gl: any, readonly width: number, readonly height: number) {
         this.quadBufferInfo = twgl.createBufferInfoFromArrays(gl, {
@@ -114,7 +115,7 @@ export default class FluidSimulator {
      */
     drawVelocity() {
         const uniforms = {
-            time: this.getTime() * 0.001,
+            time: this.getTime() * this.timeScale,
             resolution: [this.gl.canvas.width, this.gl.canvas.height],
             velocityTexture: this.velocityTexture,
         };
@@ -130,7 +131,7 @@ export default class FluidSimulator {
      */
     drawDensity() {
         const uniforms = {
-            time: this.getTime() * 0.001,
+            time: this.getTime() * this.timeScale,
             resolution: [this.gl.canvas.width, this.gl.canvas.height],
             densityTexture: this.densityTexture,
         };
