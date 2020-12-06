@@ -5,6 +5,7 @@ import { buildColorTexture } from './buildTexture';
 import { swap } from './util';
 
 const advectShader = require('./shaders/advect.frag');
+const addForcesShader = require('./shaders/addForces.frag');
 const basicVertShader = require('./shaders/basic.vert');
 const velocityFragShader = require('./shaders/velocityTexture.frag');
 const densityFragShader = require('./shaders/densityTexture.frag');
@@ -28,6 +29,7 @@ export default class FluidSimulator {
     simulationFramebuffer: number;
     // shader programs
     advectProgInfo: twgl.ProgramInfo;
+    addForcesProgInfo: twgl.ProgramInfo;
     renderVelocityProgInfo: twgl.ProgramInfo;
     renderDensityProgInfo: twgl.ProgramInfo;
     jacobiProgInfo: twgl.ProgramInfo;
@@ -55,6 +57,11 @@ export default class FluidSimulator {
         this.advectProgInfo = twgl.createProgramInfo(gl, [
             basicVertShader,
             advectShader,
+        ]);
+
+        this.addForcesProgInfo = twgl.createProgramInfo(gl, [
+            basicVertShader,
+            addForcesShader,
         ]);
 
         this.renderVelocityProgInfo = twgl.createProgramInfo(gl, [
@@ -143,6 +150,26 @@ export default class FluidSimulator {
     }
 
     /**
+     * apply external forces to velocity field
+     */
+    runAddForcesProg() {
+        bindFramebufferWithTexture(this.gl, this.simulationFramebuffer, this.res, this.res, this.tempVelocityTexture);
+
+        const uniforms = {
+            resolution: [this.res, this.res],
+            timeStep: this.timeStep,
+            velocityTexture: this.velocityTexture,
+        };
+
+        this.gl.useProgram(this.addForcesProgInfo.program);
+        twgl.setBuffersAndAttributes(this.gl, this.addForcesProgInfo, this.quadBufferInfo);
+        twgl.setUniforms(this.addForcesProgInfo, uniforms);
+        this.drawQuad();
+
+        swap(this, 'velocityTexture', 'tempVelocityTexture');
+    }
+
+    /**
      * diffuse fluid using jacobi iteration
      */
     runJacobiProg() {
@@ -173,6 +200,7 @@ export default class FluidSimulator {
         this.prevTime = time;
 
         this.runAdvectProg();
+        this.runAddForcesProg();
     }
 
     getTime() {
