@@ -33,7 +33,7 @@ export default class FluidSimulator {
     timeStep = 0;
     timeScale = 0.001;
 
-    constructor(readonly gl: any, readonly width: number, readonly height: number) {
+    constructor(readonly gl: any, readonly res: number) {
         this.quadBufferInfo = twgl.createBufferInfoFromArrays(gl, {
             position: {
                 data: [-1, -1, -1, 1, 1, -1, 1, 1],
@@ -69,36 +69,36 @@ export default class FluidSimulator {
      * build GPU texture buffers
      */
     buildTextures() {
-        const { width, height } = this;
-        const numCells = width * height;
+        const { res } = this;
+        const numCells = res * res;
 
         buildColorTexture(
             this.gl,
             this.velocityTexture,
-            width,
-            height,
+            res,
+            res,
             new Float32Array(numCells * 4).fill(0).map((_) => Math.random())
         );
 
-        buildColorTexture(this.gl, this.tempVelocityTexture, width, height, null);
+        buildColorTexture(this.gl, this.tempVelocityTexture, res, res, null);
 
         buildColorTexture(
             this.gl,
             this.pressureTexture,
-            width,
-            height,
+            res,
+            res,
             new Float32Array(numCells * 4).fill(0)
         );
 
         buildColorTexture(
             this.gl,
             this.densityTexture,
-            width,
-            height,
+            res, 
+            res,
             new Float32Array(numCells * 4).fill(0).map((_) => Math.random())
         );
 
-        buildColorTexture(this.gl, this.tempDensityTexture, width, height, null);
+        buildColorTexture(this.gl, this.tempDensityTexture, res, res, null);
     }
 
     setup() {
@@ -113,10 +113,10 @@ export default class FluidSimulator {
      * advect the fluid density
      */
     runAdvectProg() {
-        bindFramebufferWithTexture(this.gl, this.simulationFramebuffer, this.width, this.height, this.tempVelocityTexture);
+        bindFramebufferWithTexture(this.gl, this.simulationFramebuffer, this.res, this.res, this.tempVelocityTexture);
         
         const uniforms = {
-            resolution: [this.width, this.height],
+            resolution: [this.res, this.res],
             timeStep: this.timeStep,
             velocityTexture: this.velocityTexture,
             quantityTexture: this.velocityTexture,            
