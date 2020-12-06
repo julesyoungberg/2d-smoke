@@ -1,5 +1,6 @@
 import * as twgl from 'twgl.js';
 
+import bindFramebuffer from './bindFramebuffer';
 import { buildScalarTexture, buildVec2Texture } from './buildTexture';
 
 const basicVertShader = require('./shaders/basic.vert');
@@ -21,7 +22,7 @@ export default class FluidSimulator {
     renderDensityProg: twgl.ProgramInfo;
     prevTime: number = 0;
     timeStep: number = 0;
-    framebuffer: number;
+    simulationFramebuffer: number;
 
     constructor(readonly gl: any, readonly width: number, readonly height: number) {
         const arrays = {
@@ -43,9 +44,7 @@ export default class FluidSimulator {
             densityFragShader,
         ]);
 
-        this.framebuffer = this.gl.createFramebuffer();
-        // gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer);
-        // https://webgl2fundamentals.org/webgl/lessons/webgl-render-to-texture.html
+        this.simulationFramebuffer = this.gl.createFramebuffer();
     }
 
     /**
@@ -94,6 +93,8 @@ export default class FluidSimulator {
     update(time: number) {
         this.timeStep = time - this.prevTime;
         this.prevTime = time;
+
+        // bindFramebuffer(this.gl, this.simulationFramebuffer, this.width, this.height);
     }
 
     getTime() {
