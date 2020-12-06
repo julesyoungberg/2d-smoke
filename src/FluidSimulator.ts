@@ -12,17 +12,22 @@ const densityFragShader = require('./shaders/densityTexture.frag');
  * Simulates fluids in 2D using a Eulerian approach on the GPU
  */
 export default class FluidSimulator {
+    // buffers
     bufferInfo: twgl.BufferInfo;
+    // textures
     velocityTexture: number;
     tempVelocityTexture: number;
     pressureTexture: number;
     densityTexture: number;
     tempDensityTexture: number;
+    // frame buffers
+    simulationFramebuffer: number;
+    // shader programs
     renderVelocityProg: twgl.ProgramInfo;
     renderDensityProg: twgl.ProgramInfo;
+    // simulation state
     prevTime: number = 0;
     timeStep: number = 0;
-    simulationFramebuffer: number;
 
     constructor(readonly gl: any, readonly width: number, readonly height: number) {
         const arrays = {
