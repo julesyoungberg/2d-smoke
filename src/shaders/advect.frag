@@ -12,5 +12,5 @@ void main() {
     vec2 prevCoord = coord - texture2D(velocityTexture, uv).xy * timeStep;
     vec2 prevUV = prevCoord / resolution;
     // interpolate value from previous location and write to the output fragment
-    gl_FragColor = vec4(texture2D(quantityTexture, prevUV));
+    gl_FragColor = texture2D(quantityTexture, prevUV);
 }

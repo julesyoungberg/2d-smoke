@@ -131,7 +131,15 @@ export default class FluidSimulator {
     }
 
     /**
+     * diffuse fluid using jacobi iteration
+     */
+    runJacobiProg() {
+        
+    }
+
+    /**
      * run simulation update logic
+     * @param time
      */
     update(time: number) {
         this.timeStep = time - this.prevTime;
