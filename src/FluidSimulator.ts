@@ -1,6 +1,6 @@
 import * as twgl from 'twgl.js';
 
-import bindFramebuffer from './bindFramebuffer';
+import bindFramebuffer, { bindFramebufferWithTexture } from './bindFramebuffer';
 import { buildColorTexture } from './buildTexture';
 import { swap } from './util';
 
@@ -113,10 +113,7 @@ export default class FluidSimulator {
      * advect the fluid density
      */
     runAdvectProg() {
-        bindFramebuffer(this.gl, this.simulationFramebuffer, this.width, this.height);
-        this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.tempDensityTexture, 0);
-        this.gl.clearColor(0, 0, 0, 1);
-        this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+        bindFramebufferWithTexture(this.gl, this.simulationFramebuffer, this.width, this.height, this.tempDensityTexture);
         
         const uniforms = {
             resolution: [this.width, this.height],
