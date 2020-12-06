@@ -115,6 +115,8 @@ export default class FluidSimulator {
     runAdvectProg() {
         bindFramebuffer(this.gl, this.simulationFramebuffer, this.width, this.height);
         this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.tempDensityTexture, 0);
+        this.gl.clearColor(0, 0, 0, 1);
+        this.gl.clear(this.gl.COLOR_BUFFER_BIT);
         
         const uniforms = {
             resolution: [this.width, this.height],
@@ -181,6 +183,10 @@ export default class FluidSimulator {
      * draw current state of simulation
      */
     draw() {
+        bindFramebuffer(this.gl, null, this.gl.canvas.width, this.gl.canvas.height);
+        // Clear the canvas AND the depth buffer.
+        this.gl.clearColor(1, 1, 1, 1);   // clear to white
+        this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
         this.drawDensity();
     }
 }
