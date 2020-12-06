@@ -2,7 +2,9 @@ import * as twgl from 'twgl.js';
 
 import bindFramebuffer from './bindFramebuffer';
 import { buildScalarTexture, buildVec2Texture } from './buildTexture';
+import { swap } from './util';
 
+const advectShader = require('./shaders/advect.frag');
 const basicVertShader = require('./shaders/basic.vert');
 const velocityFragShader = require('./shaders/velocityTexture.frag');
 const densityFragShader = require('./shaders/densityTexture.frag');
@@ -23,6 +25,7 @@ export default class FluidSimulator {
     // frame buffers
     simulationFramebuffer: number;
     // shader programs
+    advectProgInfo: twgl.ProgramInfo;
     renderVelocityProgInfo: twgl.ProgramInfo;
     renderDensityProgInfo: twgl.ProgramInfo;
     // simulation state
@@ -44,10 +47,16 @@ export default class FluidSimulator {
         this.densityTexture = gl.createTexture();
         this.tempDensityTexture = gl.createTexture();
 
+        this.advectProgInfo = twgl.createProgramInfo(gl, [
+            basicVertShader,
+            advectShader,
+        ]);
+
         this.renderVelocityProgInfo = twgl.createProgramInfo(gl, [
             basicVertShader,
             velocityFragShader,
         ]);
+
         this.renderDensityProgInfo = twgl.createProgramInfo(gl, [
             basicVertShader,
             densityFragShader,
@@ -96,6 +105,32 @@ export default class FluidSimulator {
         this.buildTextures();
     }
 
+    drawQuad() {
+        twgl.drawBufferInfo(this.gl, this.quadBufferInfo, this.gl.TRIANGLE_STRIP);
+    }
+
+    /**
+     * advect the fluid density
+     */
+    runAdvectProg() {
+        bindFramebuffer(this.gl, this.simulationFramebuffer, this.width, this.height);
+        this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.tempDensityTexture, 0);
+        
+        const uniforms = {
+            resolution: [this.width, this.height],
+            timeStep: this.timeStep,
+            velocityTexture: this.velocityTexture,
+            densityTexture: this.densityTexture,            
+        };
+
+        this.gl.useProgram(this.advectProgInfo.program);
+        twgl.setBuffersAndAttributes(this.gl, this.advectProgInfo, this.quadBufferInfo);
+        twgl.setUniforms(this.advectProgInfo, uniforms);
+        this.drawQuad();
+
+        swap(this, 'densityTexture', 'tempDensityTexture');
+    }
+
     /**
      * run simulation update logic
      */
@@ -103,7 +138,7 @@ export default class FluidSimulator {
         this.timeStep = time - this.prevTime;
         this.prevTime = time;
 
-        // bindFramebuffer(this.gl, this.simulationFramebuffer, this.width, this.height);
+        this.runAdvectProg();
     }
 
     getTime() {
@@ -123,7 +158,7 @@ export default class FluidSimulator {
         this.gl.useProgram(this.renderVelocityProgInfo.program);
         twgl.setBuffersAndAttributes(this.gl, this.renderVelocityProgInfo, this.quadBufferInfo);
         twgl.setUniforms(this.renderVelocityProgInfo, uniforms);
-        twgl.drawBufferInfo(this.gl, this.quadBufferInfo, this.gl.TRIANGLE_STRIP);
+        this.drawQuad();
     }
 
     /**
@@ -139,7 +174,7 @@ export default class FluidSimulator {
         this.gl.useProgram(this.renderDensityProgInfo.program);
         twgl.setBuffersAndAttributes(this.gl, this.renderDensityProgInfo, this.quadBufferInfo);
         twgl.setUniforms(this.renderDensityProgInfo, uniforms);
-        twgl.drawBufferInfo(this.gl, this.quadBufferInfo, this.gl.TRIANGLE_STRIP);
+        this.drawQuad();
     }
 
     /**
