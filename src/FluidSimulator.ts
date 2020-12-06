@@ -43,16 +43,16 @@ export default class FluidSimulator {
         this.densityTexture = gl.createTexture();
         this.tempDensityTexture = gl.createTexture();
 
-        this.renderVelocityProgInfo = twgl.createProgramInfo(this.gl, [
+        this.renderVelocityProgInfo = twgl.createProgramInfo(gl, [
             basicVertShader,
             velocityFragShader,
         ]);
-        this.renderDensityProgInfo = twgl.createProgramInfo(this.gl, [
+        this.renderDensityProgInfo = twgl.createProgramInfo(gl, [
             basicVertShader,
             densityFragShader,
         ]);
 
-        this.simulationFramebuffer = this.gl.createFramebuffer();
+        this.simulationFramebuffer = gl.createFramebuffer();
     }
 
     /**
