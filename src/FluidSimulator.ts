@@ -145,7 +145,7 @@ export default class FluidSimulator {
     /**
      * advect the fluid density
      */
-    runAdvectProg() {
+    advect() {
         bindFramebufferWithTexture(this.gl, this.simulationFramebuffer, this.res, this.res, this.tempVelocityTexture);
         
         const uniforms = {
@@ -164,9 +164,37 @@ export default class FluidSimulator {
     }
 
     /**
+     * Generic function to run jacobi iteration program
+     * NOTE: this function does not bind a frame buffer nor perform any swapping
+     */
+    runJacobiProg(alpha: number, rBeta: number, x: number, b: number) {
+        this.gl.useProgram(this.jacobiProgInfo.program);
+        twgl.setBuffersAndAttributes(this.gl, this.jacobiProgInfo, this.quadBufferInfo);
+        twgl.setUniforms(this.jacobiProgInfo, { alpha, rBeta, x, b });
+        this.drawQuad();
+    }
+
+    /**
+     * Perform viscous diffusion on the fluid using jacobi iteration
+     */
+    diffuseVelocity() {
+        bindFramebufferWithTexture(this.gl, this.simulationFramebuffer, this.res, this.res, this.tempVelocityTexture);
+
+        const ndt = this.viscosity * this.timeStep;
+        const alpha = Math.pow(this.res, 2) / ndt;
+        const rBeta = 1 / (4 + (Math.pow(this.res, 2) / ndt));
+
+        for (let i = 0; i < 50; i++) {
+            this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT, this.gl.TEXTURE_2D, this.tempVelocityTexture, 0);
+            this.runJacobiProg(alpha, rBeta, this.velocityTexture, this.velocityTexture);
+            swap(this, 'velocityTexture', 'tempVelocityTexture');
+        }
+    }
+
+    /**
      * apply external forces to velocity field
      */
-    runAddForcesProg() {
+    addForces() {
         bindFramebufferWithTexture(this.gl, this.simulationFramebuffer, this.res, this.res, this.tempVelocityTexture);
 
         const uniforms = {
@@ -184,17 +212,6 @@ export default class FluidSimulator {
     }
 
     /**
-     * diffuse fluid using jacobi iteration
-     * NOTE: this function does not bind a frame buffer nor perform any swapping
-     */
-    runJacobiProg(alpha: number, rBeta: number, x: number, b: number) {
-        this.gl.useProgram(this.jacobiProgInfo.program);
-        twgl.setBuffersAndAttributes(this.gl, this.jacobiProgInfo, this.quadBufferInfo);
-        twgl.setUniforms(this.jacobiProgInfo, { alpha, rBeta, x, b });
-        this.drawQuad();
-    }
-
-    /**
      * run simulation update logic
      * @param time
      */
@@ -202,8 +219,8 @@ export default class FluidSimulator {
         this.timeStep = time - this.prevTime;
         this.prevTime = time;
 
-        this.runAdvectProg();
-        this.runAddForcesProg();
+        this.advect();
+        this.addForces();
     }
 
     getTime() {
