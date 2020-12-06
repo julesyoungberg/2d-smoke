@@ -23,8 +23,8 @@ export default class FluidSimulator {
     // frame buffers
     simulationFramebuffer: number;
     // shader programs
-    renderVelocityProg: twgl.ProgramInfo;
-    renderDensityProg: twgl.ProgramInfo;
+    renderVelocityProgInfo: twgl.ProgramInfo;
+    renderDensityProgInfo: twgl.ProgramInfo;
     // simulation state
     prevTime: number = 0;
     timeStep: number = 0;
@@ -43,11 +43,11 @@ export default class FluidSimulator {
         this.densityTexture = gl.createTexture();
         this.tempDensityTexture = gl.createTexture();
 
-        this.renderVelocityProg = twgl.createProgramInfo(this.gl, [
+        this.renderVelocityProgInfo = twgl.createProgramInfo(this.gl, [
             basicVertShader,
             velocityFragShader,
         ]);
-        this.renderDensityProg = twgl.createProgramInfo(this.gl, [
+        this.renderDensityProgInfo = twgl.createProgramInfo(this.gl, [
             basicVertShader,
             densityFragShader,
         ]);
@@ -119,9 +119,9 @@ export default class FluidSimulator {
             velocityTexture: this.velocityTexture,
         };
 
-        this.gl.useProgram(this.renderVelocityProg.program);
-        twgl.setBuffersAndAttributes(this.gl, this.renderVelocityProg, this.quadBufferInfo);
-        twgl.setUniforms(this.renderVelocityProg, uniforms);
+        this.gl.useProgram(this.renderVelocityProgInfo.program);
+        twgl.setBuffersAndAttributes(this.gl, this.renderVelocityProgInfo, this.quadBufferInfo);
+        twgl.setUniforms(this.renderVelocityProgInfo, uniforms);
         twgl.drawBufferInfo(this.gl, this.quadBufferInfo, this.gl.TRIANGLE_STRIP);
     }
 
@@ -135,9 +135,9 @@ export default class FluidSimulator {
             densityTexture: this.densityTexture,
         };
 
-        this.gl.useProgram(this.renderDensityProg.program);
-        twgl.setBuffersAndAttributes(this.gl, this.renderDensityProg, this.quadBufferInfo);
-        twgl.setUniforms(this.renderDensityProg, uniforms);
+        this.gl.useProgram(this.renderDensityProgInfo.program);
+        twgl.setBuffersAndAttributes(this.gl, this.renderDensityProgInfo, this.quadBufferInfo);
+        twgl.setUniforms(this.renderDensityProgInfo, uniforms);
         twgl.drawBufferInfo(this.gl, this.quadBufferInfo, this.gl.TRIANGLE_STRIP);
     }
 
