@@ -1,7 +1,7 @@
 import * as twgl from 'twgl.js';
 
 import bindFramebuffer from './bindFramebuffer';
-import { buildScalarTexture, buildVec2Texture } from './buildTexture';
+import { buildColorTexture } from './buildTexture';
 import { swap } from './util';
 
 const advectShader = require('./shaders/advect.frag');
@@ -72,33 +72,33 @@ export default class FluidSimulator {
         const { width, height } = this;
         const numCells = width * height;
 
-        buildVec2Texture(
+        buildColorTexture(
             this.gl,
             this.velocityTexture,
             width,
             height,
-            new Float32Array(numCells * 2).fill(0).map((_) => Math.random())
+            new Float32Array(numCells * 4).fill(0).map((_) => Math.random())
         );
 
-        buildVec2Texture(this.gl, this.tempVelocityTexture, width, height, null);
+        buildColorTexture(this.gl, this.tempVelocityTexture, width, height, null);
 
-        buildScalarTexture(
+        buildColorTexture(
             this.gl,
             this.pressureTexture,
             width,
             height,
-            new Float32Array(numCells).fill(0)
+            new Float32Array(numCells * 4).fill(0)
         );
 
-        buildScalarTexture(
+        buildColorTexture(
             this.gl,
             this.densityTexture,
             width,
             height,
-            new Float32Array(numCells).fill(0).map((_) => Math.random())
+            new Float32Array(numCells * 4).fill(0).map((_) => Math.random())
         );
 
-        buildScalarTexture(this.gl, this.tempDensityTexture, width, height, null);
+        buildColorTexture(this.gl, this.tempDensityTexture, width, height, null);
     }
 
     setup() {

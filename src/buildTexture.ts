@@ -37,6 +37,37 @@ export default function buildTexture(gl: any, textureID: number, opt: buildTextu
 }
 
 /**
+ * Builds a color texture
+ * @param gl 
+ * @param textureID 
+ * @param width 
+ * @param height 
+ * @param src 
+ * @param filtering 
+ * @param wrapping 
+ */
+export function buildColorTexture(
+    gl: any,
+    textureID: number,
+    width: number,
+    height: number,
+    src: any,
+    filtering?: number,
+    wrapping?: number
+) {
+    buildTexture(gl, textureID, {
+        internalFormat: gl.RGBA,
+        format: gl.RGBA,
+        type: gl.FLOAT,
+        width,
+        height,
+        src,
+        filtering,
+        wrapping,
+    });
+}
+
+/**
  * Builds a 2D texture of scalars
  * @param gl
  * @param textureID
