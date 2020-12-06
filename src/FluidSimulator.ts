@@ -10,6 +10,8 @@ const basicVertShader = require('./shaders/basic.vert');
 const velocityFragShader = require('./shaders/velocityTexture.frag');
 const densityFragShader = require('./shaders/densityTexture.frag');
 const jacobiShader = require('./shaders/jacobi.frag');
+const divergenceShader = require('./shaders/divergence.frag');
+const subtractShader = require('./shaders/subtract.frag');
 
 /**
  * FluidSimulator class
@@ -33,6 +35,8 @@ export default class FluidSimulator {
     renderVelocityProgInfo: twgl.ProgramInfo;
     renderDensityProgInfo: twgl.ProgramInfo;
     jacobiProgInfo: twgl.ProgramInfo;
+    divergenceProgInfo: twgl.ProgramInfo;
+    subtractProgInfo: twgl.ProgramInfo;
     // simulation state
     prevTime = 0;
     timeStep = 0;
@@ -77,6 +81,16 @@ export default class FluidSimulator {
         this.jacobiProgInfo = twgl.createProgramInfo(gl, [
             basicVertShader,
             jacobiShader,
+        ]);
+
+        this.divergenceProgInfo = twgl.createProgramInfo(gl, [
+            basicVertShader,
+            divergenceShader,
+        ]);
+
+        this.subtractProgInfo = twgl.createProgramInfo(gl, [
+            basicVertShader,
+            subtractShader,
         ]);
 
         this.simulationFramebuffer = gl.createFramebuffer();
@@ -171,24 +185,13 @@ export default class FluidSimulator {
 
     /**
      * diffuse fluid using jacobi iteration
+     * NOTE: this function does not bind a frame buffer nor perform any swapping
      */
-    runJacobiProg() {
-        bindFramebufferWithTexture(this.gl, this.simulationFramebuffer, this.res, this.res, this.tempPressureTexture);
-
-        const ndt = (this.viscosity * this.timeStep * this.timeScale);
-        const uniforms = {
-            alpha: Math.pow(this.res, 2) / ndt,
-            rBeta: 1 / (4 + (Math.pow(this.res, 2) / ndt)),
-            x: this.pressureTexture,
-            b: this.pressureTexture,
-        };
-
+    runJacobiProg(alpha: number, rBeta: number, x: number, b: number) {
         this.gl.useProgram(this.jacobiProgInfo.program);
         twgl.setBuffersAndAttributes(this.gl, this.jacobiProgInfo, this.quadBufferInfo);
-        twgl.setUniforms(this.jacobiProgInfo, uniforms);
+        twgl.setUniforms(this.jacobiProgInfo, { alpha, rBeta, x, b });
         this.drawQuad();
-
-        swap(this, 'pressureTexture', 'tempPressureTexture');
     }
 
     /**
