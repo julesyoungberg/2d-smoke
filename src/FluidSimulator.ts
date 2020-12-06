@@ -8,6 +8,7 @@ const advectShader = require('./shaders/advect.frag');
 const basicVertShader = require('./shaders/basic.vert');
 const velocityFragShader = require('./shaders/velocityTexture.frag');
 const densityFragShader = require('./shaders/densityTexture.frag');
+const jacobiShader = require('./shaders/jacobi.frag');
 
 /**
  * FluidSimulator class
@@ -20,6 +21,7 @@ export default class FluidSimulator {
     velocityTexture: number;
     tempVelocityTexture: number;
     pressureTexture: number;
+    tempPressureTexture: number;
     densityTexture: number;
     tempDensityTexture: number;
     // frame buffers
@@ -28,10 +30,12 @@ export default class FluidSimulator {
     advectProgInfo: twgl.ProgramInfo;
     renderVelocityProgInfo: twgl.ProgramInfo;
     renderDensityProgInfo: twgl.ProgramInfo;
+    jacobiProgInfo: twgl.ProgramInfo;
     // simulation state
     prevTime = 0;
     timeStep = 0;
     timeScale = 0.001;
+    viscosity = 0.101;
 
     constructor(readonly gl: any, readonly res: number) {
         this.quadBufferInfo = twgl.createBufferInfoFromArrays(gl, {
@@ -44,6 +48,7 @@ export default class FluidSimulator {
         this.velocityTexture = gl.createTexture();
         this.tempVelocityTexture = gl.createTexture();
         this.pressureTexture = gl.createTexture();
+        this.tempPressureTexture = gl.createTexture();
         this.densityTexture = gl.createTexture();
         this.tempDensityTexture = gl.createTexture();
 
@@ -60,6 +65,11 @@ export default class FluidSimulator {
         this.renderDensityProgInfo = twgl.createProgramInfo(gl, [
             basicVertShader,
             densityFragShader,
+        ]);
+
+        this.jacobiProgInfo = twgl.createProgramInfo(gl, [
+            basicVertShader,
+            jacobiShader,
         ]);
 
         this.simulationFramebuffer = gl.createFramebuffer();
@@ -89,6 +99,8 @@ export default class FluidSimulator {
             res,
             new Float32Array(numCells * 4).fill(0)
         );
+
+        buildColorTexture(this.gl, this.tempPressureTexture, res, res, null);
 
         buildColorTexture(
             this.gl,
@@ -134,7 +146,22 @@ export default class FluidSimulator {
      * diffuse fluid using jacobi iteration
      */
     runJacobiProg() {
-        
+        bindFramebufferWithTexture(this.gl, this.simulationFramebuffer, this.res, this.res, this.tempPressureTexture);
+
+        const ndt = (this.viscosity * this.timeStep * this.timeScale);
+        const uniforms = {
+            alpha: Math.pow(this.res, 2) / ndt,
+            rBeta: 1 / (4 + (Math.pow(this.res, 2) / ndt)),
+            x: this.pressureTexture,
+            b: this.pressureTexture,
+        };
+
+        this.gl.useProgram(this.jacobiProgInfo.program);
+        twgl.setBuffersAndAttributes(this.gl, this.jacobiProgInfo, this.quadBufferInfo);
+        twgl.setUniforms(this.jacobiProgInfo, uniforms);
+        this.drawQuad();
+
+        swap(this, 'pressureTexture', 'tempPressureTexture');
     }
 
     /**
