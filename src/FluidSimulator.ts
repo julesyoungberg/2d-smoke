@@ -1,7 +1,7 @@
 import * as twgl from 'twgl.js';
 
 import bindFramebuffer, { bindFramebufferWithTexture } from './bindFramebuffer';
-import { buildColorTexture } from './buildTexture';
+import buildTexture, { buildColorTexture } from './buildTexture';
 import { swap } from './util';
 
 const advectShader = require('./shaders/advect.frag');
@@ -180,7 +180,7 @@ export default class FluidSimulator {
         const rBeta = 1 / (4 + (Math.pow(this.res, 2) / ndt));
 
         for (let i = 0; i < 50; i++) {
-            this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT, this.gl.TEXTURE_2D, this.tempTexture, 0);
+            this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.tempTexture, 0);
             this.runJacobiProg(alpha, rBeta, this.velocityTexture, this.velocityTexture);
             swap(this, 'velocityTexture', 'tempTexture');
         }
@@ -207,6 +207,59 @@ export default class FluidSimulator {
     }
 
     /**
+     * Compute the divergence of the velocity field
+     */
+    computeDivergence() {
+        bindFramebufferWithTexture(this.gl, this.simulationFramebuffer, this.res, this.res, this.divergenceTexture);
+
+        const uniforms = {
+            halfrdx: 0.5 * (1 / this.res), // should this be divison like in GPU gems?
+            w: this.velocityTexture,
+        };
+
+        this.gl.useProgram(this.divergenceProgInfo.program);
+        twgl.setBuffersAndAttributes(this.gl, this.divergenceProgInfo, this.quadBufferInfo);
+        twgl.setUniforms(this.divergenceProgInfo, uniforms);
+        this.drawQuad();
+    }
+
+    /**
+     * Compute pressure field with jacobi iteration
+     */
+    computePressureField() {
+        bindFramebufferWithTexture(this.gl, this.simulationFramebuffer, this.res, this.res, this.pressureTexture);
+
+        const alpha = -Math.pow(this.res, 2);
+        const rBeta = 0.25;
+
+        for (let i = 0; i < 50; i++) {
+            this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.tempTexture, 0);
+            this.runJacobiProg(alpha, rBeta, this.divergenceTexture, this.pressureTexture);
+            swap(this, 'pressureTexture', 'tempTexture');
+        }
+    }
+
+    /**
+     * Subtract pressure field gradient from intermediate velocity field
+     */
+    subtractPressureGradient() {
+        bindFramebufferWithTexture(this.gl, this.simulationFramebuffer, this.res, this.res, this.tempTexture);
+
+        const uniforms = {
+            halfrdx: 0.5 * (1 / this.res), // should this be divison like in GPU gems?
+            pressureField: this.pressureTexture,
+            velocityField: this.velocityTexture,
+        };
+
+        this.gl.useProgram(this.subtractProgInfo.program);
+        twgl.setBuffersAndAttributes(this.gl, this.subtractProgInfo, this.quadBufferInfo);
+        twgl.setUniforms(this.subtractProgInfo, uniforms);
+        this.drawQuad();
+
+        swap(this, 'velocityTexture', 'tempTexture');
+    }
+
+    /**
      * run simulation update logic
      * @param time
      */
@@ -215,7 +268,11 @@ export default class FluidSimulator {
         this.prevTime = time;
 
         this.advect();
+        this.diffuseVelocity();
         this.addForces();
+        this.computeDivergence();
+        this.computePressureField();
+        this.subtractPressureGradient();
     }
 
     getTime() {

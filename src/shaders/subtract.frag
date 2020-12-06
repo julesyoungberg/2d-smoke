@@ -2,7 +2,7 @@ precision mediump float;
 
 uniform float halfrdx;
 uniform sampler2D pressureField;
-uniform sampler2D veleocityField;
+uniform sampler2D velocityField;
 
 void main() {
     vec2 coord = gl_FragCoord.xy;
@@ -13,6 +13,8 @@ void main() {
     float pB = texture2D(pressureField, coord - vec2(0, 1)).x;
     float pT = texture2D(pressureField, coord + vec2(0, 1)).x;
 
-    vec2 nextVelocity = texture2D(veleocityField, coord).xy;
+    vec2 nextVelocity = texture2D(velocityField, coord).xy;
     nextVelocity -= halfrdx * vec2(pR - pL, pT - pB);
+
+    gl_FragColor = vec4(nextVelocity.x, nextVelocity.y, 0, 1);
 }
