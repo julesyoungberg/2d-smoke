@@ -1,7 +1,7 @@
 import * as twgl from 'twgl.js';
 
 import bindFramebuffer, { bindFramebufferWithTexture } from './util/bindFramebuffer';
-import { buildColorTexture } from './util/buildTexture';
+import buildTexture from './util/buildTexture';
 import { swap } from './util';
 
 const advectShader = require('./shaders/advect.frag');
@@ -94,39 +94,29 @@ export default class FluidSimulator {
         const { res } = this;
         const numCells = res * res;
 
-        buildColorTexture(this.gl, this.tempTexture, res, res, null);
+        const dims = { width: res, height: res };
 
-        buildColorTexture(
-            this.gl,
-            this.velocityTexture,
-            res,
-            res,
-            new Float32Array(numCells * 4).fill(0).map((_) => Math.random())
-        );
+        buildTexture(this.gl, this.tempTexture, { ...dims, src: null });
 
-        buildColorTexture(
-            this.gl,
-            this.pressureTexture,
-            res,
-            res,
-            new Float32Array(numCells * 4).fill(0)
-        );
+        buildTexture(this.gl, this.velocityTexture, {
+            ...dims,
+            src: new Float32Array(numCells * 4).fill(0).map((_) => Math.random()),
+        });
 
-        buildColorTexture(
-            this.gl,
-            this.densityTexture,
-            res, 
-            res,
-            new Float32Array(numCells * 4).fill(0).map((_) => Math.random())
-        );
+        buildTexture(this.gl, this.pressureTexture, {
+            ...dims,
+            src: new Float32Array(numCells * 4).fill(0),
+        });
 
-        buildColorTexture(
-            this.gl,
-            this.divergenceTexture,
-            res, 
-            res,
-            new Float32Array(numCells * 4).fill(0)
-        );
+        buildTexture(this.gl, this.densityTexture, {
+            ...dims,
+            src: new Float32Array(numCells * 4).fill(0).map((_) => Math.random()),
+        });
+
+        buildTexture(this.gl, this.divergenceTexture, {
+            ...dims,
+            src: new Float32Array(numCells * 4).fill(0)
+        });
     }
 
     setup() {
