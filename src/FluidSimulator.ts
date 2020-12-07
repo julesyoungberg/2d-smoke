@@ -3,6 +3,7 @@ import * as twgl from 'twgl.js';
 import bindFramebuffer, { bindFramebufferWithTexture } from './util/bindFramebuffer';
 import buildTexture from './util/buildTexture';
 import { swap } from './util';
+import getTextureData from './util/getTextureData';
 
 const advectShader = require('./shaders/advect.frag');
 const addForcesShader = require('./shaders/addForces.frag');
@@ -269,9 +270,10 @@ export default class FluidSimulator {
         this.advect();
         this.diffuseVelocity();
         // this.addForces();
-        // this.computeDivergence();
-        // this.computePressureField();
+        this.computeDivergence();
+        this.computePressureField();
         // this.subtractPressureGradient();
+        // console.log(getTextureData(this.gl, this.divergenceTexture, this.res, this.res));
     }
 
     getTime() {
