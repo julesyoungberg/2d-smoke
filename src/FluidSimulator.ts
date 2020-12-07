@@ -20,13 +20,13 @@ export default class FluidSimulator {
     // buffers
     quadBufferInfo: twgl.BufferInfo;
     // textures
-    tempTexture: any;
-    velocityTexture: any;
-    pressureTexture: any;
-    densityTexture: any;
-    divergenceTexture: any;
+    tempTexture: WebGLTexture;
+    velocityTexture: WebGLTexture;
+    pressureTexture: WebGLTexture;
+    densityTexture: WebGLTexture;
+    divergenceTexture: WebGLTexture;
     // frame buffers
-    simulationFramebuffer: number;
+    simulationFramebuffer: WebGLFramebuffer;
     // shader programs
     advectProgInfo: twgl.ProgramInfo;
     addForcesProgInfo: twgl.ProgramInfo;
@@ -152,7 +152,7 @@ export default class FluidSimulator {
      * Generic function to run jacobi iteration program
      * NOTE: this function does not bind a frame buffer nor perform any swapping
      */
-    runJacobiProg(alpha: number, rBeta: number, x: number, b: number) {
+    runJacobiProg(alpha: number, rBeta: number, x: WebGLTexture, b: WebGLTexture) {
         const uniforms = {
             resolution: [this.res, this.res],
             alpha,
@@ -269,8 +269,8 @@ export default class FluidSimulator {
         this.advect();
         this.diffuseVelocity();
         // this.addForces();
-        this.computeDivergence();
-        this.computePressureField();
+        // this.computeDivergence();
+        // this.computePressureField();
         // this.subtractPressureGradient();
     }
 

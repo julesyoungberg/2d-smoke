@@ -1,4 +1,5 @@
-precision mediump float;
+// #version 300 es
+precision highp float;
 
 uniform vec2 resolution;
 uniform float timeStep;

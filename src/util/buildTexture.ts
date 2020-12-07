@@ -15,12 +15,12 @@ interface buildTextureOptions {
  * @param texture
  * @param opt
  */
-export default function buildTexture(gl: any, texture: any, opt: buildTextureOptions) {
+export default function buildTexture(gl: WebGLRenderingContext, texture: WebGLTexture, opt: buildTextureOptions) {
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.texImage2D(
         gl.TEXTURE_2D,
         0,
-        opt.internalFormat || gl.RGBA,
+        opt.internalFormat || (gl as any).RGBA32F, // why?
         opt.width,
         opt.height,
         0,

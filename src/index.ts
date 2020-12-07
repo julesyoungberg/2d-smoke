@@ -12,7 +12,7 @@ const fluidSimulator = new FluidSimulator(gl, size);
 fluidSimulator.setup();
 
 function render(time: number) {
-    twgl.resizeCanvasToDisplaySize(gl.canvas);
+    twgl.resizeCanvasToDisplaySize(gl.canvas as HTMLCanvasElement);
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
     fluidSimulator.update(time);

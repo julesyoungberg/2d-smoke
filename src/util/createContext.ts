@@ -1,12 +1,23 @@
-let floatTextures: any;
-let floatTexturesLinear: any;
+const EXTENSIONS = ['EXT_color_buffer_float', 'OES_texture_float_linear'];
+const extensionRefs = {};
 
 /**
  * create WebGL context with required extensions
  */
 export default function createContext() {
-    const gl = (document.getElementById('webgl-canvas') as any).getContext('webgl');
-    floatTextures = gl.getExtension('OES_texture_float');
-    floatTexturesLinear = gl.getExtension('OES_texture_float_linear');
+    const gl: WebGLRenderingContext = (document.getElementById('webgl-canvas') as any).getContext('webgl2');
+    if (!gl) {
+        alert('need WebGL2');
+        return undefined;
+    }
+    
+    for (let ext of EXTENSIONS) {
+        extensionRefs[ext] = gl.getExtension(ext);
+        if (!ext) {
+            alert(`need ${ext}`);
+            return undefined;
+        }
+    }
+
     return gl;
 }
