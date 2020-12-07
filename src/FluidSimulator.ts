@@ -163,9 +163,16 @@ export default class FluidSimulator {
      * NOTE: this function does not bind a frame buffer nor perform any swapping
      */
     runJacobiProg(alpha: number, rBeta: number, x: number, b: number) {
+        const uniforms = {
+            resolution: [this.res, this.res],
+            alpha,
+            rBeta, 
+            x,
+            b,
+        }
         this.gl.useProgram(this.jacobiProgInfo.program);
         twgl.setBuffersAndAttributes(this.gl, this.jacobiProgInfo, this.quadBufferInfo);
-        twgl.setUniforms(this.jacobiProgInfo, { alpha, rBeta, x, b });
+        twgl.setUniforms(this.jacobiProgInfo, uniforms);
         this.drawQuad();
     }
 
@@ -213,6 +220,7 @@ export default class FluidSimulator {
         bindFramebufferWithTexture(this.gl, this.simulationFramebuffer, this.res, this.res, this.divergenceTexture);
 
         const uniforms = {
+            resolution: [this.res, this.res],
             halfrdx: 0.5 * (1 / this.res), // should this be divison like in GPU gems?
             w: this.velocityTexture,
         };
@@ -246,6 +254,7 @@ export default class FluidSimulator {
         bindFramebufferWithTexture(this.gl, this.simulationFramebuffer, this.res, this.res, this.tempTexture);
 
         const uniforms = {
+            resolution: [this.res, this.res],
             halfrdx: 0.5 * (1 / this.res), // should this be divison like in GPU gems?
             pressureField: this.pressureTexture,
             velocityField: this.velocityTexture,
@@ -269,7 +278,7 @@ export default class FluidSimulator {
 
         this.advect();
         this.diffuseVelocity();
-        this.addForces();
+        // this.addForces();
         this.computeDivergence();
         this.computePressureField();
         this.subtractPressureGradient();
