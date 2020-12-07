@@ -18,7 +18,7 @@ export default function bindFramebuffer(gl: any, framebuffer: number, width: num
  * @param height 
  * @param texture 
  */
-export function bindFramebufferWithTexture(gl: any, framebuffer: number, width: number, height: number, texture: number) {
+export function bindFramebufferWithTexture(gl: any, framebuffer: number, width: number, height: number, texture: any) {
     bindFramebuffer(gl, framebuffer, width, height);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
     gl.clearColor(0, 0, 0, 1);

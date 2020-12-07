@@ -1,8 +1,8 @@
 import * as twgl from 'twgl.js';
 
-import createContext from './createContext';
+import createContext from './util/createContext';
 import FluidSimulator from './FluidSimulator';
-import getSimulationSize from './getSimulationSize';
+import getSimulationSize from './util/getSimulationSize';
 
 const gl = createContext();
 

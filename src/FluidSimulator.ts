@@ -1,7 +1,7 @@
 import * as twgl from 'twgl.js';
 
-import bindFramebuffer, { bindFramebufferWithTexture } from './bindFramebuffer';
-import buildTexture, { buildColorTexture } from './buildTexture';
+import bindFramebuffer, { bindFramebufferWithTexture } from './util/bindFramebuffer';
+import { buildColorTexture } from './util/buildTexture';
 import { swap } from './util';
 
 const advectShader = require('./shaders/advect.frag');
@@ -20,11 +20,11 @@ export default class FluidSimulator {
     // buffers
     quadBufferInfo: twgl.BufferInfo;
     // textures
-    tempTexture: number;
-    velocityTexture: number;
-    pressureTexture: number;
-    densityTexture: number;
-    divergenceTexture: number;
+    tempTexture: any;
+    velocityTexture: any;
+    pressureTexture: any;
+    densityTexture: any;
+    divergenceTexture: any;
     // frame buffers
     simulationFramebuffer: number;
     // shader programs
@@ -281,14 +281,14 @@ export default class FluidSimulator {
         // this.addForces();
         this.computeDivergence();
         this.computePressureField();
-        this.subtractPressureGradient();
+        // this.subtractPressureGradient();
     }
 
     getTime() {
         return this.prevTime + this.timeStep;
     }
 
-    drawTexture(texture: number) {
+    drawTexture(texture: any) {
         const uniforms = {
             time: this.getTime() * this.timeScale,
             resolution: [this.gl.canvas.width, this.gl.canvas.height],
