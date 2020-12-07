@@ -1,5 +1,7 @@
-// #version 300 es
+#version 300 es
 precision highp float;
+
+out vec4 fragColor;
 
 uniform vec2 resolution;
 uniform float timeStep;
@@ -9,9 +11,9 @@ void main() {
     vec2 coord = gl_FragCoord.xy;
     vec2 uv = coord / resolution;
     
-    vec3 velocity = texture2D(velocityTexture, uv).xyz;
+    vec3 velocity = texture(velocityTexture, uv).xyz;
 
     // velocity.y -= 9.0 * timeStep;
 
-    gl_FragColor = vec4(velocity, 1);
+    fragColor = vec4(velocity, 1);
 }

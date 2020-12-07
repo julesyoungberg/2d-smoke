@@ -1,4 +1,7 @@
-precision mediump float;
+#version 300 es
+precision highp float;
+
+out vec4 fragColor;
 
 uniform vec2 resolution;
 uniform float timeStep;
@@ -10,8 +13,8 @@ void main() {
     vec2 scale = 1.0 / resolution;
     vec2 uv = coord / resolution;
     // follow the velocity field "back in time"
-    vec2 prevCoord = coord - scale * texture2D(velocityTexture, uv).xy * timeStep;
+    vec2 prevCoord = coord - scale * texture(velocityTexture, uv).xy * timeStep;
     vec2 prevUV = prevCoord / resolution;
     // interpolate value from previous location and write to the output fragment
-    gl_FragColor = texture2D(quantityTexture, prevUV);
+    fragColor = texture(quantityTexture, prevUV);
 }

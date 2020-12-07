@@ -278,11 +278,11 @@ export default class FluidSimulator {
         return this.prevTime + this.timeStep;
     }
 
-    drawTexture(texture: any) {
+    drawTexture(tex: any) {
         const uniforms = {
             time: this.getTime() * this.timeScale,
             resolution: [this.gl.canvas.width, this.gl.canvas.height],
-            texture,
+            tex,
         };
 
         this.gl.useProgram(this.renderTextureProgInfo.program);
