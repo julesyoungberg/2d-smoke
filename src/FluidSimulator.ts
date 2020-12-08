@@ -101,7 +101,7 @@ export default class FluidSimulator {
 
         buildTexture(this.gl, this.velocityTexture, {
             ...dims,
-            src: new Float32Array(numCells * 4).fill(0).map((_) => Math.random()),
+            src: new Float32Array(numCells * 4).fill(0),
         });
 
         buildTexture(this.gl, this.pressureTexture, {
@@ -111,7 +111,7 @@ export default class FluidSimulator {
 
         buildTexture(this.gl, this.densityTexture, {
             ...dims,
-            src: new Float32Array(numCells * 4).fill(0).map((_) => Math.random()),
+            src: new Float32Array(numCells * 4).fill(0),
         });
 
         buildTexture(this.gl, this.divergenceTexture, {
@@ -269,10 +269,10 @@ export default class FluidSimulator {
 
         this.advect();
         this.diffuseVelocity();
-        // this.addForces();
+        this.addForces();
         this.computeDivergence();
         this.computePressureField();
-        // this.subtractPressureGradient();
+        this.subtractPressureGradient();
         // console.log(getTextureData(this.gl, this.divergenceTexture, this.res, this.res));
     }
 
