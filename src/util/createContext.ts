@@ -5,12 +5,14 @@ const extensionRefs = {};
  * create WebGL context with required extensions
  */
 export default function createContext() {
-    const gl: WebGLRenderingContext = (document.getElementById('webgl-canvas') as any).getContext('webgl2');
+    const gl: WebGLRenderingContext = (document.getElementById('webgl-canvas') as any).getContext(
+        'webgl2'
+    );
     if (!gl) {
         alert('need WebGL2');
         return undefined;
     }
-    
+
     for (let ext of EXTENSIONS) {
         extensionRefs[ext] = gl.getExtension(ext);
         if (!ext) {

@@ -15,7 +15,11 @@ interface buildTextureOptions {
  * @param texture
  * @param opt
  */
-export default function buildTexture(gl: WebGLRenderingContext, texture: WebGLTexture, opt: buildTextureOptions) {
+export default function buildTexture(
+    gl: WebGLRenderingContext,
+    texture: WebGLTexture,
+    opt: buildTextureOptions
+) {
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.texImage2D(
         gl.TEXTURE_2D,

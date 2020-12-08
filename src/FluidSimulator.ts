@@ -8,10 +8,11 @@ import getTextureData from './util/getTextureData';
 const advectShader = require('./shaders/advect.frag');
 const addForcesShader = require('./shaders/addForces.frag');
 const basicVertShader = require('./shaders/basic.vert');
-const textureFragShader = require('./shaders/texture.frag');
-const jacobiShader = require('./shaders/jacobi.frag');
+const boundaryShader = require('./shaders/boundary.frag');
 const divergenceShader = require('./shaders/divergence.frag');
+const jacobiShader = require('./shaders/jacobi.frag');
 const subtractShader = require('./shaders/subtract.frag');
+const textureShader = require('./shaders/texture.frag');
 
 /**
  * FluidSimulator class
@@ -21,20 +22,21 @@ export default class FluidSimulator {
     // buffers
     quadBufferInfo: twgl.BufferInfo;
     // textures
-    tempTexture: WebGLTexture;
-    velocityTexture: WebGLTexture;
-    pressureTexture: WebGLTexture;
     densityTexture: WebGLTexture;
     divergenceTexture: WebGLTexture;
+    pressureTexture: WebGLTexture;
+    tempTexture: WebGLTexture;
+    velocityTexture: WebGLTexture;
     // frame buffers
     simulationFramebuffer: WebGLFramebuffer;
     // shader programs
     advectProgInfo: twgl.ProgramInfo;
     addForcesProgInfo: twgl.ProgramInfo;
-    jacobiProgInfo: twgl.ProgramInfo;
+    boundaryProgInfo: twgl.ProgramInfo;
     divergenceProgInfo: twgl.ProgramInfo;
-    subtractProgInfo: twgl.ProgramInfo;
+    jacobiProgInfo: twgl.ProgramInfo;
     renderTextureProgInfo: twgl.ProgramInfo;
+    subtractProgInfo: twgl.ProgramInfo;
     // simulation state
     prevTime = 0;
     timeStep = 0;
@@ -49,41 +51,19 @@ export default class FluidSimulator {
             },
         });
 
-        this.tempTexture = gl.createTexture();
-        this.velocityTexture = gl.createTexture();
-        this.pressureTexture = gl.createTexture();
         this.densityTexture = gl.createTexture();
         this.divergenceTexture = gl.createTexture();
+        this.pressureTexture = gl.createTexture();
+        this.tempTexture = gl.createTexture();
+        this.velocityTexture = gl.createTexture();
 
-        this.advectProgInfo = twgl.createProgramInfo(gl, [
-            basicVertShader,
-            advectShader,
-        ]);
-
-        this.addForcesProgInfo = twgl.createProgramInfo(gl, [
-            basicVertShader,
-            addForcesShader,
-        ]);
-
-        this.jacobiProgInfo = twgl.createProgramInfo(gl, [
-            basicVertShader,
-            jacobiShader,
-        ]);
-
-        this.divergenceProgInfo = twgl.createProgramInfo(gl, [
-            basicVertShader,
-            divergenceShader,
-        ]);
-
-        this.subtractProgInfo = twgl.createProgramInfo(gl, [
-            basicVertShader,
-            subtractShader,
-        ]);
-
-        this.renderTextureProgInfo = twgl.createProgramInfo(gl, [
-            basicVertShader,
-            textureFragShader,
-        ]);
+        this.advectProgInfo = twgl.createProgramInfo(gl, [basicVertShader, advectShader]);
+        this.addForcesProgInfo = twgl.createProgramInfo(gl, [basicVertShader, addForcesShader]);
+        this.boundaryProgInfo = twgl.createProgramInfo(gl, [basicVertShader, boundaryShader]);
+        this.divergenceProgInfo = twgl.createProgramInfo(gl, [basicVertShader, divergenceShader]);
+        this.jacobiProgInfo = twgl.createProgramInfo(gl, [basicVertShader, jacobiShader]);
+        this.renderTextureProgInfo = twgl.createProgramInfo(gl, [basicVertShader, textureShader]);
+        this.subtractProgInfo = twgl.createProgramInfo(gl, [basicVertShader, subtractShader]);
 
         this.simulationFramebuffer = gl.createFramebuffer();
     }
@@ -116,7 +96,7 @@ export default class FluidSimulator {
 
         buildTexture(this.gl, this.divergenceTexture, {
             ...dims,
-            src: new Float32Array(numCells * 4).fill(0)
+            src: new Float32Array(numCells * 4).fill(0),
         });
     }
 
@@ -132,13 +112,19 @@ export default class FluidSimulator {
      * advect the fluid density
      */
     advect() {
-        bindFramebufferWithTexture(this.gl, this.simulationFramebuffer, this.res, this.res, this.tempTexture);
-        
+        bindFramebufferWithTexture(
+            this.gl,
+            this.simulationFramebuffer,
+            this.res,
+            this.res,
+            this.tempTexture
+        );
+
         const uniforms = {
             resolution: [this.res, this.res],
             timeStep: this.timeStep,
             velocityTexture: this.velocityTexture,
-            quantityTexture: this.velocityTexture,            
+            quantityTexture: this.velocityTexture,
         };
 
         this.gl.useProgram(this.advectProgInfo.program);
@@ -157,10 +143,10 @@ export default class FluidSimulator {
         const uniforms = {
             resolution: [this.res, this.res],
             alpha,
-            rBeta, 
+            rBeta,
             x,
             b,
-        }
+        };
         this.gl.useProgram(this.jacobiProgInfo.program);
         twgl.setBuffersAndAttributes(this.gl, this.jacobiProgInfo, this.quadBufferInfo);
         twgl.setUniforms(this.jacobiProgInfo, uniforms);
@@ -171,14 +157,26 @@ export default class FluidSimulator {
      * Perform viscous diffusion on the fluid using jacobi iteration
      */
     diffuseVelocity() {
-        bindFramebufferWithTexture(this.gl, this.simulationFramebuffer, this.res, this.res, this.tempTexture);
+        bindFramebufferWithTexture(
+            this.gl,
+            this.simulationFramebuffer,
+            this.res,
+            this.res,
+            this.tempTexture
+        );
 
         const ndt = this.viscosity * this.timeStep;
         const alpha = Math.pow(this.res, 2) / ndt;
-        const rBeta = 1 / (4 + (Math.pow(this.res, 2) / ndt));
+        const rBeta = 1 / (4 + Math.pow(this.res, 2) / ndt);
 
         for (let i = 0; i < 50; i++) {
-            this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.tempTexture, 0);
+            this.gl.framebufferTexture2D(
+                this.gl.FRAMEBUFFER,
+                this.gl.COLOR_ATTACHMENT0,
+                this.gl.TEXTURE_2D,
+                this.tempTexture,
+                0
+            );
             this.runJacobiProg(alpha, rBeta, this.velocityTexture, this.velocityTexture);
             swap(this, 'velocityTexture', 'tempTexture');
         }
@@ -188,7 +186,13 @@ export default class FluidSimulator {
      * apply external forces to velocity field
      */
     addForces() {
-        bindFramebufferWithTexture(this.gl, this.simulationFramebuffer, this.res, this.res, this.tempTexture);
+        bindFramebufferWithTexture(
+            this.gl,
+            this.simulationFramebuffer,
+            this.res,
+            this.res,
+            this.tempTexture
+        );
 
         const uniforms = {
             resolution: [this.res, this.res],
@@ -208,7 +212,13 @@ export default class FluidSimulator {
      * Compute the divergence of the velocity field
      */
     computeDivergence() {
-        bindFramebufferWithTexture(this.gl, this.simulationFramebuffer, this.res, this.res, this.divergenceTexture);
+        bindFramebufferWithTexture(
+            this.gl,
+            this.simulationFramebuffer,
+            this.res,
+            this.res,
+            this.divergenceTexture
+        );
 
         const uniforms = {
             resolution: [this.res, this.res],
@@ -226,13 +236,25 @@ export default class FluidSimulator {
      * Compute pressure field with jacobi iteration
      */
     computePressureField() {
-        bindFramebufferWithTexture(this.gl, this.simulationFramebuffer, this.res, this.res, this.pressureTexture);
+        bindFramebufferWithTexture(
+            this.gl,
+            this.simulationFramebuffer,
+            this.res,
+            this.res,
+            this.pressureTexture
+        );
 
         const alpha = -Math.pow(this.res, 2);
         const rBeta = 0.25;
 
         for (let i = 0; i < 50; i++) {
-            this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.tempTexture, 0);
+            this.gl.framebufferTexture2D(
+                this.gl.FRAMEBUFFER,
+                this.gl.COLOR_ATTACHMENT0,
+                this.gl.TEXTURE_2D,
+                this.tempTexture,
+                0
+            );
             this.runJacobiProg(alpha, rBeta, this.divergenceTexture, this.pressureTexture);
             swap(this, 'pressureTexture', 'tempTexture');
         }
@@ -242,7 +264,13 @@ export default class FluidSimulator {
      * Subtract pressure field gradient from intermediate velocity field
      */
     subtractPressureGradient() {
-        bindFramebufferWithTexture(this.gl, this.simulationFramebuffer, this.res, this.res, this.tempTexture);
+        bindFramebufferWithTexture(
+            this.gl,
+            this.simulationFramebuffer,
+            this.res,
+            this.res,
+            this.tempTexture
+        );
 
         const uniforms = {
             resolution: [this.res, this.res],
@@ -299,7 +327,7 @@ export default class FluidSimulator {
     draw() {
         bindFramebuffer(this.gl, null, this.gl.canvas.width, this.gl.canvas.height);
         // Clear the canvas AND the depth buffer.
-        this.gl.clearColor(1, 1, 1, 1);   // clear to white
+        this.gl.clearColor(1, 1, 1, 1); // clear to white
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
         this.drawTexture(this.velocityTexture);
     }
