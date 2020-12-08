@@ -241,21 +241,20 @@ export default class FluidSimulator {
     /**
      * Enforce boundary conditions on a given field
      */
-    enforceFieldBoundaries(texture: WebGLTexture) {
+    enforceFieldBoundaries(x: WebGLTexture, scale: number) {
         this.runSimProg(this.boundaryProgInfo, {
             resolution: [this.res, this.res],
-            offset: [0, 0],
-            scale: -1,
-            x: texture,
+            scale,
+            x,
         });
     }
 
     enforceVelocityBoundaries() {
-        this.enforceFieldBoundaries(this.velocityTexture);
+        this.enforceFieldBoundaries(this.velocityTexture, -1);
     }
 
     enforcePressureBoundaries() {
-        this.enforceFieldBoundaries(this.pressureTexture);
+        this.enforceFieldBoundaries(this.pressureTexture, 1);
     }
 
     /**
