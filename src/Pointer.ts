@@ -1,3 +1,5 @@
+import { Color, randomColor } from './util/color';
+
 /**
  * Represents a mouse or finger on the screen
  */
@@ -11,9 +13,10 @@ export default class Pointer {
     deltaY = 0;
     down = false;
     moved = false;
+    color: Color;
 
     constructor(readonly canvas: HTMLCanvasElement) {
-        //
+        this.color = randomColor();
     }
 
     onDown(id: number, x: number, y: number) {

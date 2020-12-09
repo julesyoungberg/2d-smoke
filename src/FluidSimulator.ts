@@ -1,17 +1,21 @@
 import * as twgl from 'twgl.js';
 
+import Pointer from './Pointer';
 import Pointers from './Pointers';
 import { swap } from './util';
 import bindFramebuffer, { bindFramebufferWithTexture } from './util/bindFramebuffer';
 import buildTexture from './util/buildTexture';
+import { Color, randomColor } from './util/color';
 import getResolution, { Resolution } from './util/getResolution';
 
 const advectShader = require('./shaders/advect.frag');
 const addForcesShader = require('./shaders/addForces.frag');
+const basicFragShader = require('./shaders/basic.frag');
 const basicVertShader = require('./shaders/basic.vert');
 const boundaryShader = require('./shaders/boundary.frag');
 const divergenceShader = require('./shaders/divergence.frag');
 const jacobiShader = require('./shaders/jacobi.frag');
+const splatShader = require('./shaders/splat.frag');
 const subtractShader = require('./shaders/subtract.frag');
 const textureShader = require('./shaders/texture.frag');
 
@@ -49,10 +53,12 @@ export default class FluidSimulator {
     // shader programs
     advectProgInfo: twgl.ProgramInfo;
     addForcesProgInfo: twgl.ProgramInfo;
+    basicProgInfo: twgl.ProgramInfo;
     boundaryProgInfo: twgl.ProgramInfo;
     divergenceProgInfo: twgl.ProgramInfo;
     jacobiProgInfo: twgl.ProgramInfo;
     renderTextureProgInfo: twgl.ProgramInfo;
+    splatProgInfo: twgl.ProgramInfo;
     subtractProgInfo: twgl.ProgramInfo;
     // simulation state
     prevTime = 0;
@@ -63,6 +69,7 @@ export default class FluidSimulator {
     swap: (a: string, b: string) => void;
     simRes: Resolution;
     dyeRes: Resolution;
+    splatStack: number[] = [];
 
     constructor(gl: WebGLRenderingContext) {
         this.gl = gl;
@@ -82,10 +89,12 @@ export default class FluidSimulator {
 
         this.advectProgInfo = twgl.createProgramInfo(gl, [basicVertShader, advectShader]);
         this.addForcesProgInfo = twgl.createProgramInfo(gl, [basicVertShader, addForcesShader]);
+        this.basicProgInfo = twgl.createProgramInfo(gl, [basicVertShader, basicFragShader]);
         this.boundaryProgInfo = twgl.createProgramInfo(gl, [basicVertShader, boundaryShader]);
         this.divergenceProgInfo = twgl.createProgramInfo(gl, [basicVertShader, divergenceShader]);
         this.jacobiProgInfo = twgl.createProgramInfo(gl, [basicVertShader, jacobiShader]);
         this.renderTextureProgInfo = twgl.createProgramInfo(gl, [basicVertShader, textureShader]);
+        this.splatProgInfo = twgl.createProgramInfo(gl, [basicVertShader, splatShader]);
         this.subtractProgInfo = twgl.createProgramInfo(gl, [basicVertShader, subtractShader]);
 
         this.simulationFramebuffer = gl.createFramebuffer();
@@ -280,8 +289,41 @@ export default class FluidSimulator {
         this.enforceFieldBoundaries(this.pressureTexture, 1);
     }
 
-    applyInputs() {
+    splat(x: number, y: number, dx: number, dy: number, color: Color) {
+        // TODO
+    }
 
+    multipleSplats(nSplats: number) {
+        for (let i = 0; i < nSplats; i++) {
+            const color = randomColor();
+            color.r *= 10.0;
+            color.g *= 10.0;
+            color.b *= 10.0;
+            const x = Math.random();
+            const y = Math.random();
+            const dx = 1000 * (Math.random() - 0.5);
+            const dy = 1000 * (Math.random() - 0.5);
+            this.splat(x, y, dx, dy, color);
+        }
+    }
+
+    splatPointer(p: Pointer) {
+        const dx = p.deltaX * config.SPLAT_FORCE;
+        const dy = p.deltaY * config.SPLAT_FORCE;
+        this.splat(p.x, p.y, dx, dy, p.color);
+    }
+
+    applyInputs() {
+        if (this.splatStack.length > 0) {
+            this.multipleSplats(this.splatStack.pop());
+        }
+
+        this.pointers.pointers.forEach(p => {
+            if (p.moved) {
+                p.moved = false;
+                this.splatPointer(p);
+            }
+        })
     }
 
     /**
@@ -311,6 +353,10 @@ export default class FluidSimulator {
 
     getTime() {
         return this.prevTime + this.timeStep;
+    }
+
+    drawBasic() {
+        this.runProg(this.basicProgInfo, {});
     }
 
     drawTexture(tex: WebGLTexture) {

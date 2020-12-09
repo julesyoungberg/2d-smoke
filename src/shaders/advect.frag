@@ -1,6 +1,8 @@
 #version 300 es
 precision highp float;
 
+in vec2 uv;
+in vec2 coord;
 out vec4 fragColor;
 
 uniform vec2 resolution;
@@ -9,9 +11,7 @@ uniform sampler2D velocityTexture;
 uniform sampler2D quantityTexture;
 
 void main() {
-    vec2 coord = gl_FragCoord.xy;
     vec2 scale = 1.0 / resolution;
-    vec2 uv = coord / resolution;
     // follow the velocity field "back in time"
     vec2 prevCoord = coord - scale * texture(velocityTexture, uv).xy * timeStep;
     vec2 prevUV = prevCoord / resolution;

@@ -1,19 +1,18 @@
 #version 300 es
 precision highp float;
 
+in vec2 coord;
 out vec4 fragColor;
 
 uniform vec2 resolution;
 uniform float scale;
 uniform sampler2D x;
 
-vec4 fetchVal(vec2 coord) {
-    return scale * texture(x, coord / resolution);
+vec4 fetchVal(vec2 c) {
+    return scale * texture(x, c / resolution);
 }
 
 void main() {
-    vec2 coord = gl_FragCoord.xy;
-
     if (coord.x == 0.0) {
         // left edge
         if (coord.y == 0.0 || coord.y == resolution.y - 1.0) {
