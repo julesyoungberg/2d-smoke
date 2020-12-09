@@ -9,7 +9,7 @@ export default class Pointers {
     pointers: Pointer[] = [];
 
     constructor(readonly canvas: HTMLCanvasElement) {
-        //
+        this.pointers.push(new Pointer(canvas));
     }
 
     setup() {

@@ -2,13 +2,10 @@ import * as twgl from 'twgl.js';
 
 import createContext from './util/createContext';
 import FluidSimulator from './FluidSimulator';
-import getSimulationSize from './util/getSimulationSize';
 
 const gl = createContext();
 
-const size = getSimulationSize(gl.canvas.width);
-
-const fluidSimulator = new FluidSimulator(gl, size);
+const fluidSimulator = new FluidSimulator(gl);
 fluidSimulator.setup();
 
 function render(time: number) {
