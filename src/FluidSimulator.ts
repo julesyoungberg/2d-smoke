@@ -1,9 +1,9 @@
 import * as twgl from 'twgl.js';
 
+import Pointers from './Pointers';
 import bindFramebuffer, { bindFramebufferWithTexture } from './util/bindFramebuffer';
 import buildTexture from './util/buildTexture';
 import { swap } from './util';
-import getTextureData from './util/getTextureData';
 
 const advectShader = require('./shaders/advect.frag');
 const addForcesShader = require('./shaders/addForces.frag');
@@ -42,6 +42,7 @@ export default class FluidSimulator {
     timeStep = 0;
     timeScale = 0.001;
     viscosity = 0.101;
+    pointers: Pointers;
 
     constructor(readonly gl: any, readonly res: number) {
         this.quadBufferInfo = twgl.createBufferInfoFromArrays(gl, {
@@ -66,6 +67,8 @@ export default class FluidSimulator {
         this.subtractProgInfo = twgl.createProgramInfo(gl, [basicVertShader, subtractShader]);
 
         this.simulationFramebuffer = gl.createFramebuffer();
+
+        this.pointers = new Pointers(gl.canvas);
     }
 
     /**
@@ -90,6 +93,7 @@ export default class FluidSimulator {
 
     setup() {
         this.buildTextures();
+        this.pointers.setup();
     }
 
     bindSimulationFramebuffer(texture?: WebGLTexture) {
