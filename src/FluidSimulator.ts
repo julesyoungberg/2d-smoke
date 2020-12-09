@@ -134,6 +134,7 @@ export default class FluidSimulator {
     setup() {
         this.buildTextures();
         this.pointers.setup();
+        this.multipleSplats(Math.random() * 20 + 5);
     }
 
     bindSimFramebuffer(texture?: WebGLTexture) {
