@@ -44,6 +44,7 @@ export default class FluidSimulator {
     densityTexture: WebGLTexture;
     divergenceTexture: WebGLTexture;
     dyeTexture: WebGLTexture;
+    dyeTempTexture: WebGLTexture;
     pressureTexture: WebGLTexture;
     simTexture: WebGLTexture;
     velocityTexture: WebGLTexture;
@@ -83,6 +84,7 @@ export default class FluidSimulator {
         this.densityTexture = gl.createTexture();
         this.divergenceTexture = gl.createTexture();
         this.dyeTexture = gl.createTexture();
+        this.dyeTempTexture = gl.createTexture();
         this.pressureTexture = gl.createTexture();
         this.simTexture = gl.createTexture();
         this.velocityTexture = gl.createTexture();
@@ -125,7 +127,8 @@ export default class FluidSimulator {
         buildTexture(this.gl, this.velocityTexture, opt);
 
         // create dye texture
-        buildTexture(this.gl, this.dyeTexture, { ...dyeRes, src: null });
+        buildTexture(this.gl, this.dyeTexture, { ...dyeRes, src: new Float32Array(dyeRes.width * dyeRes.height * 4) });
+        buildTexture(this.gl, this.dyeTempTexture, { ...dyeRes, src: null });
     }
 
     setup() {
@@ -133,13 +136,23 @@ export default class FluidSimulator {
         this.pointers.setup();
     }
 
-    bindSimulationFramebuffer(texture?: WebGLTexture) {
+    bindSimFramebuffer(texture?: WebGLTexture) {
         bindFramebufferWithTexture(
             this.gl,
             this.simulationFramebuffer,
             this.simRes.width,
             this.simRes.height,
             texture || this.simTexture
+        );
+    }
+
+    bindDyeFrameBuffer(texture?: WebGLTexture) {
+        bindFramebufferWithTexture(
+            this.gl,
+            this.dyeFramebuffer,
+            this.dyeRes.width,
+            this.dyeRes.height,
+            texture || this.dyeTempTexture
         );
     }
 
@@ -151,7 +164,7 @@ export default class FluidSimulator {
     }
 
     runSimProg(programInfo: twgl.ProgramInfo, uniforms: Record<string, any>) {
-        this.bindSimulationFramebuffer();
+        this.bindSimFramebuffer();
         this.runProg(programInfo, uniforms);
     }
 
@@ -190,7 +203,7 @@ export default class FluidSimulator {
      * Perform viscous diffusion on the fluid using jacobi iteration
      */
     diffuseVelocity() {
-        this.bindSimulationFramebuffer();
+        this.bindSimFramebuffer();
 
         const ndt = this.viscosity * this.timeStep;
         const alpha = this.simRes.width ** 2 / ndt;
@@ -226,7 +239,7 @@ export default class FluidSimulator {
      * Compute the divergence of the velocity field
      */
     computeDivergence() {
-        this.bindSimulationFramebuffer(this.divergenceTexture);
+        this.bindSimFramebuffer(this.divergenceTexture);
         this.runProg(this.divergenceProgInfo, {
             resolution: this.getSimRes(),
             halfrdx: 0.5 * (1 / this.simRes.width), // should this be divison like in GPU gems?
@@ -238,7 +251,7 @@ export default class FluidSimulator {
      * Compute pressure field with jacobi iteration
      */
     computePressureField() {
-        this.bindSimulationFramebuffer(this.pressureTexture);
+        this.bindSimFramebuffer(this.pressureTexture);
 
         const alpha = -(this.simRes.width ** 2);
         const rBeta = 0.25;
@@ -289,8 +302,36 @@ export default class FluidSimulator {
         this.enforceFieldBoundaries(this.pressureTexture, 1);
     }
 
+    scaleRadius(r: number) {
+        const aspectRatio = this.gl.canvas.width / this.gl.canvas.height;
+        if (aspectRatio > 1) {
+            return r * aspectRatio;
+        }
+
+        return r;
+    }
+
     splat(x: number, y: number, dx: number, dy: number, color: Color) {
-        // TODO
+        const common = {
+            aspectRatio: this.gl.canvas.width / this.gl.canvas.height,
+            point: [x, y],
+            radius: this.scaleRadius(config.SPLAT_RADIUS / 100.0),
+        };
+    
+        this.runSimProg(this.splatProgInfo, {
+            ...common,
+            color: [dx, dy, 0],
+            tex: this.velocityTexture,
+        });
+        this.swap('velocityTexture', 'simTexture');
+
+        this.bindDyeFrameBuffer();
+        this.runProg(this.splatProgInfo, {
+            ...common,
+            color: [color.r, color.g, color.b],
+            tex: this.dyeTexture,
+        });
+        this.swap('dyeTexture', 'dyeTempTexture');
     }
 
     multipleSplats(nSplats: number) {
@@ -348,7 +389,7 @@ export default class FluidSimulator {
         this.prevTime = time;
 
         this.applyInputs();
-        this.runSimulation();
+        // this.runSimulation();
     }
 
     getTime() {
@@ -375,6 +416,6 @@ export default class FluidSimulator {
         // Clear the canvas AND the depth buffer.
         this.gl.clearColor(1, 1, 1, 1); // clear to white
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
-        this.drawTexture(this.velocityTexture);
+        this.drawTexture(this.dyeTexture);
     }
 }

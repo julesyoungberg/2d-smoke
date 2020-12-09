@@ -29,6 +29,7 @@ export default class Pointer {
         this.deltaY = 0;
         this.down = true;
         this.moved = false;
+        this.color = randomColor();
     }
 
     scaleDeltaX(d: number) {
