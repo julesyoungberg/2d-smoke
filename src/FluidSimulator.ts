@@ -28,7 +28,7 @@ const config = {
     PRESSURE: 0.8,
     PRESSURE_ITERATIONS: 50,
     CURL: 30,
-    SPLAT_RADIUS: 0.25,
+    SPLAT_RADIUS: 2.0,
     SPLAT_FORCE: 6000,
 };
 
@@ -134,7 +134,7 @@ export default class FluidSimulator {
     setup() {
         this.buildTextures();
         this.pointers.setup();
-        this.multipleSplats(Math.random() * 20 + 5);
+        this.multipleSplats(Math.random() * 4 + 2);
     }
 
     bindSimFramebuffer(texture?: WebGLTexture) {
