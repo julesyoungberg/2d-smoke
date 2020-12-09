@@ -10,9 +10,9 @@ export function scaleByPixelRatio(input: number) {
 }
 
 export function getMouseXY(e: MouseEvent) {
-    return { x: scaleByPixelRatio(e.offsetX), y: scaleByPixelRatio(e.offsetY) };
+    return { x: e.offsetX, y: e.offsetY };
 }
 
 export function getTouchXY(e: Touch) {
-    return { x: scaleByPixelRatio(e.pageX), y: scaleByPixelRatio(e.pageY) };
+    return { x: e.pageX, y: e.pageY };
 }
