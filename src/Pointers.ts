@@ -10,9 +10,7 @@ export default class Pointers {
 
     constructor(readonly canvas: HTMLCanvasElement) {
         this.pointers.push(new Pointer(canvas));
-    }
 
-    setup() {
         this.canvas.addEventListener('mousedown', (e: MouseEvent) => {
             const { x, y } = getMouseXY(e);
             let pointer = this.pointers.find((p) => p.id === -1);

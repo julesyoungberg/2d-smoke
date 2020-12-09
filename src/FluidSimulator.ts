@@ -41,7 +41,6 @@ export default class FluidSimulator {
     // buffers
     quadBufferInfo: twgl.BufferInfo;
     // textures
-    densityTexture: WebGLTexture;
     divergenceTexture: WebGLTexture;
     dyeTexture: WebGLTexture;
     dyeTempTexture: WebGLTexture;
@@ -71,6 +70,7 @@ export default class FluidSimulator {
     simRes: Resolution;
     dyeRes: Resolution;
     splatStack: number[] = [];
+    running = true;
 
     constructor(gl: WebGLRenderingContext) {
         this.gl = gl;
@@ -81,7 +81,6 @@ export default class FluidSimulator {
             },
         });
 
-        this.densityTexture = gl.createTexture();
         this.divergenceTexture = gl.createTexture();
         this.dyeTexture = gl.createTexture();
         this.dyeTempTexture = gl.createTexture();
@@ -108,6 +107,12 @@ export default class FluidSimulator {
 
         this.simRes = getResolution(gl, config.SIM_RESOLUTION);
         this.dyeRes = getResolution(gl, config.DYE_RESOLUTION);
+
+        gl.canvas.addEventListener('keydown', (e: KeyboardEvent) => {
+            if (e.code === 'KeyP') {
+                this.running = false;
+            }
+        });
     }
 
     /**
@@ -120,7 +125,6 @@ export default class FluidSimulator {
         // create simulation textures
         const zeros = new Float32Array(numCells * 4).fill(0);
         const opt = { ...simRes, src: zeros };
-        buildTexture(this.gl, this.densityTexture, opt);
         buildTexture(this.gl, this.divergenceTexture, opt);
         buildTexture(this.gl, this.pressureTexture, opt);
         buildTexture(this.gl, this.simTexture, { ...simRes, src: null });
@@ -133,7 +137,6 @@ export default class FluidSimulator {
 
     setup() {
         this.buildTextures();
-        this.pointers.setup();
         this.multipleSplats(Math.random() * 4 + 2);
     }
 
@@ -372,12 +375,13 @@ export default class FluidSimulator {
      * run simulation update logic
      */
     runSimulation() {
-        this.advect();
-        this.diffuseVelocity();
-        this.addForces();
-        this.computeDivergence();
-        this.computePressureField();
-        this.subtractPressureGradient();
+        this.gl.disable(this.gl.BLEND);
+        // this.advect();
+        // this.diffuseVelocity();
+        // this.addForces();
+        // this.computeDivergence();
+        // this.computePressureField();
+        // this.subtractPressureGradient();
         // console.log(getTextureData(this.gl, this.divergenceTexture, this.res, this.res));
     }
 
@@ -390,7 +394,10 @@ export default class FluidSimulator {
         this.prevTime = time;
 
         this.applyInputs();
-        // this.runSimulation();
+        
+        if (this.running) {
+            this.runSimulation();
+        }
     }
 
     getTime() {
