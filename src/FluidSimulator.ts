@@ -6,7 +6,7 @@ import { swap } from './util';
 import bindFramebuffer, { bindFramebufferWithTexture } from './util/bindFramebuffer';
 import buildTexture from './util/buildTexture';
 import { Color, randomColor } from './util/color';
-import getResolution, { Resolution } from './util/getResolution';
+import getResolution from './util/getResolution';
 
 const advectShader = require('./shaders/advect.frag');
 const addForcesShader = require('./shaders/addForces.frag');
@@ -67,8 +67,10 @@ export default class FluidSimulator {
     viscosity = 0.101;
     pointers: Pointers;
     swap: (a: string, b: string) => void;
-    simRes: Resolution;
-    dyeRes: Resolution;
+    simRes: twgl.v3.Vec3;
+    simTexelSize: twgl.v3.Vec3;
+    dyeRes: twgl.v3.Vec3;
+    dyeTexelSize: twgl.v3.Vec3;
     splatStack: number[] = [];
     running = true;
 
@@ -120,42 +122,49 @@ export default class FluidSimulator {
      */
     buildTextures() {
         const { simRes, dyeRes } = this;
-        const numCells = simRes.width * simRes.height;
+        const numCells = simRes[0] * simRes[1];
 
         // create simulation textures
         const zeros = new Float32Array(numCells * 4).fill(0);
-        const opt = { ...simRes, src: zeros };
+        const simDimensions = { width: simRes[0], height: simRes[1] };
+        const opt = { ...simDimensions, src: zeros };
         buildTexture(this.gl, this.divergenceTexture, opt);
         buildTexture(this.gl, this.pressureTexture, opt);
-        buildTexture(this.gl, this.simTexture, { ...simRes, src: null });
+        buildTexture(this.gl, this.simTexture, { ...simDimensions, src: null });
         buildTexture(this.gl, this.velocityTexture, opt);
 
         // create dye texture
-        buildTexture(this.gl, this.dyeTexture, { ...dyeRes, src: new Float32Array(dyeRes.width * dyeRes.height * 4) });
-        buildTexture(this.gl, this.dyeTempTexture, { ...dyeRes, src: null });
+        const dyeDimensions = { width: dyeRes[0], height: dyeRes[1] };
+        buildTexture(this.gl, this.dyeTexture, {
+            ...dyeDimensions,
+            src: new Float32Array(dyeRes[0] * dyeRes[1] * 4),
+        });
+        buildTexture(this.gl, this.dyeTempTexture, { ...dyeDimensions, src: null });
     }
 
     setup() {
         this.buildTextures();
         this.multipleSplats(Math.random() * 4 + 2);
+        this.simTexelSize = twgl.v3.create(1 / this.simRes[0], 1 / this.simRes[1]);
+        this.dyeTexelSize = twgl.v3.create(1 / this.dyeRes[0], 1 / this.dyeRes[1]);
     }
 
     bindSimFramebuffer(texture?: WebGLTexture) {
         bindFramebufferWithTexture(
             this.gl,
             this.simulationFramebuffer,
-            this.simRes.width,
-            this.simRes.height,
+            this.simRes[0],
+            this.simRes[1],
             texture || this.simTexture
         );
     }
 
-    bindDyeFrameBuffer(texture?: WebGLTexture) {
+    bindDyeFramebuffer(texture?: WebGLTexture) {
         bindFramebufferWithTexture(
             this.gl,
             this.dyeFramebuffer,
-            this.dyeRes.width,
-            this.dyeRes.height,
+            this.dyeRes[0],
+            this.dyeRes[1],
             texture || this.dyeTempTexture
         );
     }
@@ -173,21 +182,40 @@ export default class FluidSimulator {
     }
 
     getSimRes() {
-        return [this.simRes.width, this.simRes.height];
+        return this.simRes.slice(0, 2);
     }
 
     /**
      * advect the fluid density
      */
-    advect() {
-        this.runSimProg(this.advectProgInfo, {
-            resolution: this.getSimRes(),
+    advect(quantityTexture: WebGLTexture, texelSize: number[], decay: number) {
+        this.runProg(this.advectProgInfo, {
+            texelSize,
+            decay,
             timeStep: this.timeStep,
             velocityTexture: this.velocityTexture,
-            quantityTexture: this.velocityTexture,
+            quantityTexture,
         });
+    }
 
+    advectVelocity() {
+        this.bindSimFramebuffer();
+        this.advect(
+            this.velocityTexture,
+            Array.from(this.simTexelSize).slice(0, 2),
+            config.VELOCITY_DISSIPATION
+        );
         this.swap('velocityTexture', 'simTexture');
+    }
+
+    advectDye() {
+        this.bindDyeFramebuffer();
+        this.advect(
+            this.dyeTexture,
+            Array.from(this.dyeTexelSize).slice(0, 2),
+            config.DENSITY_DISSIPATION
+        );
+        this.swap('dyeTexture', 'dyeTempTexture');
     }
 
     /**
@@ -195,7 +223,7 @@ export default class FluidSimulator {
      */
     runJacobiProg(alpha: number, rBeta: number, x: WebGLTexture, b: WebGLTexture) {
         this.runProg(this.jacobiProgInfo, {
-            resolution: this.getSimRes(),
+            texelSize: this.simTexelSize.slice(0, 2),
             alpha,
             rBeta,
             x,
@@ -210,8 +238,8 @@ export default class FluidSimulator {
         this.bindSimFramebuffer();
 
         const ndt = this.viscosity * this.timeStep;
-        const alpha = this.simRes.width ** 2 / ndt;
-        const rBeta = 1 / (4 + this.simRes.width ** 2 / ndt);
+        const alpha = this.simRes[0] ** 2 / ndt;
+        const rBeta = 1 / (4 + this.simRes[0] ** 2 / ndt);
 
         for (let i = 0; i < 50; i++) {
             this.gl.framebufferTexture2D(
@@ -245,8 +273,7 @@ export default class FluidSimulator {
     computeDivergence() {
         this.bindSimFramebuffer(this.divergenceTexture);
         this.runProg(this.divergenceProgInfo, {
-            resolution: this.getSimRes(),
-            halfrdx: 0.5 * (1 / this.simRes.width), // should this be divison like in GPU gems?
+            texelSize: this.simTexelSize.slice(0, 2),
             w: this.velocityTexture,
         });
     }
@@ -257,7 +284,7 @@ export default class FluidSimulator {
     computePressureField() {
         this.bindSimFramebuffer(this.pressureTexture);
 
-        const alpha = -(this.simRes.width ** 2);
+        const alpha = -1;
         const rBeta = 0.25;
 
         for (let i = 0; i < 50; i++) {
@@ -278,8 +305,7 @@ export default class FluidSimulator {
      */
     subtractPressureGradient() {
         this.runSimProg(this.subtractProgInfo, {
-            resolution: this.getSimRes(),
-            halfrdx: 0.5 / (1 / this.simRes.width),
+            texelSize: this.simTexelSize.slice(0, 2),
             pressureField: this.pressureTexture,
             velocityField: this.velocityTexture,
         });
@@ -321,7 +347,7 @@ export default class FluidSimulator {
             point: [x, y],
             radius: this.scaleRadius(config.SPLAT_RADIUS / 100.0),
         };
-    
+
         this.runSimProg(this.splatProgInfo, {
             ...common,
             color: [dx, dy, 0],
@@ -329,7 +355,7 @@ export default class FluidSimulator {
         });
         this.swap('velocityTexture', 'simTexture');
 
-        this.bindDyeFrameBuffer();
+        this.bindDyeFramebuffer();
         this.runProg(this.splatProgInfo, {
             ...common,
             color: [color.r, color.g, color.b],
@@ -363,12 +389,12 @@ export default class FluidSimulator {
             this.multipleSplats(this.splatStack.pop());
         }
 
-        this.pointers.pointers.forEach(p => {
+        this.pointers.pointers.forEach((p) => {
             if (p.moved) {
                 p.moved = false;
                 this.splatPointer(p);
             }
-        })
+        });
     }
 
     /**
@@ -376,25 +402,26 @@ export default class FluidSimulator {
      */
     runSimulation() {
         this.gl.disable(this.gl.BLEND);
-        // this.advect();
         // this.diffuseVelocity();
         // this.addForces();
         // this.computeDivergence();
         // this.computePressureField();
         // this.subtractPressureGradient();
+        // this.advectVelocity();
+        // this.advectDye();
         // console.log(getTextureData(this.gl, this.divergenceTexture, this.res, this.res));
     }
 
     /**
      * main update logic ran each time step`
-     * @param time 
+     * @param time
      */
     update(time: number) {
         this.timeStep = time - this.prevTime;
         this.prevTime = time;
 
         this.applyInputs();
-        
+
         if (this.running) {
             this.runSimulation();
         }
@@ -424,6 +451,6 @@ export default class FluidSimulator {
         // Clear the canvas AND the depth buffer.
         this.gl.clearColor(1, 1, 1, 1); // clear to white
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
-        this.drawTexture(this.dyeTexture);
+        this.drawTexture(this.velocityTexture);
     }
 }

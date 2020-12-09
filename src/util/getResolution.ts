@@ -1,9 +1,6 @@
-export interface Resolution {
-    width: number;
-    height: number;
-}
+import { v3 } from 'twgl.js';
 
-export default function getResolution(gl: WebGLRenderingContext, res: number): Resolution {
+export default function getResolution(gl: WebGLRenderingContext, res: number) {
     let aspectRatio = gl.drawingBufferWidth / gl.drawingBufferHeight;
     if (aspectRatio < 1) {
         aspectRatio = 1 / aspectRatio;
@@ -13,8 +10,8 @@ export default function getResolution(gl: WebGLRenderingContext, res: number): R
     const max = Math.round(res * aspectRatio);
 
     if (gl.drawingBufferWidth > gl.drawingBufferHeight) {
-        return { width: max, height: min };
+        return v3.create(max, min);
     }
-    
-    return { width: min, height: max };
+
+    return v3.create(min, max);
 }

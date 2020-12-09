@@ -4,19 +4,18 @@ precision highp float;
 in vec2 uv;
 out vec4 fragColor;
 
-uniform vec2 resolution;
+uniform vec2 texelSize;
 uniform float alpha;
 uniform float rBeta;
 uniform sampler2D x;
 uniform sampler2D b;
 
 void main() {
-    vec2 coord = gl_FragCoord.xy;
     // left, right, bottom, and top x samples
-    vec4 xL = texture(x, uv - (vec2(1, 0) / resolution));
-    vec4 xR = texture(x, uv + (vec2(1, 0) / resolution));
-    vec4 xB = texture(x, uv - (vec2(0, 1) / resolution));
-    vec4 xT = texture(x, uv + (vec2(0, 1) / resolution));
+    vec4 xL = texture(x, uv - vec2(texelSize.x, 0));
+    vec4 xR = texture(x, uv + vec2(texelSize.x, 0));
+    vec4 xB = texture(x, uv - vec2(0, texelSize.y));
+    vec4 xT = texture(x, uv + vec2(0, texelSize.y));
 
     // b sample, from center
     vec4 bC = texture(b, uv);
