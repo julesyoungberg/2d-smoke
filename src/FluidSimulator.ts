@@ -43,8 +43,9 @@ export default class FluidSimulator {
     timeScale = 0.001;
     viscosity = 0.101;
     pointers: Pointers;
+    swap: (a: string, b: string) => void;
 
-    constructor(readonly gl: any, readonly res: number) {
+    constructor(readonly gl: WebGLRenderingContext, readonly res: number) {
         this.quadBufferInfo = twgl.createBufferInfoFromArrays(gl, {
             position: {
                 data: [-1, -1, -1, 1, 1, -1, 1, 1],
@@ -68,7 +69,9 @@ export default class FluidSimulator {
 
         this.simulationFramebuffer = gl.createFramebuffer();
 
-        this.pointers = new Pointers(gl.canvas);
+        this.pointers = new Pointers(gl.canvas as HTMLCanvasElement);
+
+        this.swap = swap.bind(this);
     }
 
     /**
@@ -105,7 +108,7 @@ export default class FluidSimulator {
             texture || this.tempTexture
         );
     }
-    
+
     runProg(programInfo: twgl.ProgramInfo, uniforms: Record<string, any>) {
         this.gl.useProgram(programInfo.program);
         twgl.setBuffersAndAttributes(this.gl, programInfo, this.quadBufferInfo);
@@ -129,7 +132,7 @@ export default class FluidSimulator {
             quantityTexture: this.velocityTexture,
         });
 
-        swap(this, 'velocityTexture', 'tempTexture');
+        this.swap('velocityTexture', 'tempTexture');
     }
 
     /**
@@ -153,8 +156,8 @@ export default class FluidSimulator {
         this.bindSimulationFramebuffer();
 
         const ndt = this.viscosity * this.timeStep;
-        const alpha = Math.pow(this.res, 2) / ndt;
-        const rBeta = 1 / (4 + Math.pow(this.res, 2) / ndt);
+        const alpha = this.res ** 2 / ndt;
+        const rBeta = 1 / (4 + this.res ** 2 / ndt);
 
         for (let i = 0; i < 50; i++) {
             this.gl.framebufferTexture2D(
@@ -165,7 +168,7 @@ export default class FluidSimulator {
                 0
             );
             this.runJacobiProg(alpha, rBeta, this.velocityTexture, this.velocityTexture);
-            swap(this, 'velocityTexture', 'tempTexture');
+            this.swap('velocityTexture', 'tempTexture');
         }
     }
 
@@ -179,7 +182,7 @@ export default class FluidSimulator {
             velocityTexture: this.velocityTexture,
         });
 
-        swap(this, 'velocityTexture', 'tempTexture');
+        this.swap('velocityTexture', 'tempTexture');
     }
 
     /**
@@ -200,7 +203,7 @@ export default class FluidSimulator {
     computePressureField() {
         this.bindSimulationFramebuffer(this.pressureTexture);
 
-        const alpha = -Math.pow(this.res, 2);
+        const alpha = -(this.res ** 2);
         const rBeta = 0.25;
 
         for (let i = 0; i < 50; i++) {
@@ -212,7 +215,7 @@ export default class FluidSimulator {
                 0
             );
             this.runJacobiProg(alpha, rBeta, this.divergenceTexture, this.pressureTexture);
-            swap(this, 'pressureTexture', 'tempTexture');
+            this.swap('pressureTexture', 'tempTexture');
         }
     }
 
@@ -227,7 +230,7 @@ export default class FluidSimulator {
             velocityField: this.velocityTexture,
         });
 
-        swap(this, 'velocityTexture', 'tempTexture');
+        this.swap('velocityTexture', 'tempTexture');
     }
 
     /**
@@ -270,7 +273,7 @@ export default class FluidSimulator {
         return this.prevTime + this.timeStep;
     }
 
-    drawTexture(tex: any) {
+    drawTexture(tex: WebGLTexture) {
         this.runProg(this.renderTextureProgInfo, {
             time: this.getTime() * this.timeScale,
             resolution: [this.gl.canvas.width, this.gl.canvas.height],

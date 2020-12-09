@@ -1,5 +1,6 @@
 /**
- * Get simulation dimensions as the nearest power of 2 of screen width and apropriately scaled height
+ * Get simulation dimensions as the nearest power of 2
+ * of screen width and apropriately scaled height
  * @param width
  */
 export default function getSimulationSize(width: number) {

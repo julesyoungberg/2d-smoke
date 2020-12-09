@@ -15,7 +15,7 @@ export default class Pointers {
     setup() {
         this.canvas.addEventListener('mousedown', (e: MouseEvent) => {
             const { x, y } = getMouseXY(e);
-            let pointer = this.pointers.find(p => p.id === -1);
+            let pointer = this.pointers.find((p) => p.id === -1);
             if (!pointer) {
                 pointer = new Pointer(this.canvas);
                 this.pointers.push(pointer);
@@ -33,7 +33,7 @@ export default class Pointers {
             pointer.onMove(x, y);
         });
 
-        this.canvas.addEventListener('mouseup', (e: MouseEvent) => {
+        this.canvas.addEventListener('mouseup', () => {
             this.pointers[0].onUp();
         });
 
@@ -68,9 +68,9 @@ export default class Pointers {
         this.canvas.addEventListener('touchend', (e: TouchEvent) => {
             e.preventDefault();
             const touches = e.changedTouches;
-            
-            Array.from(touches).forEach((touch, i) => {
-                const pointer = this.pointers.find(p => p.id === touch.identifier);
+
+            Array.from(touches).forEach((touch) => {
+                const pointer = this.pointers.find((p) => p.id === touch.identifier);
                 pointer?.onUp();
             });
         });

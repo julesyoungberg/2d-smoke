@@ -13,7 +13,8 @@ export default function createContext() {
         return undefined;
     }
 
-    for (let ext of EXTENSIONS) {
+    for (let i = 0; i < EXTENSIONS.length; i++) {
+        const ext = EXTENSIONS[i];
         extensionRefs[ext] = gl.getExtension(ext);
         if (!ext) {
             alert(`need ${ext}`);

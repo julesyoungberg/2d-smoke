@@ -1,7 +1,7 @@
-export function swap(o: any, a: string, b: string) {
-    const t: any = o[a];
-    o[a] = o[b];
-    o[b] = t;
+export function swap(a: string, b: string) {
+    const t: any = this[a];
+    this[a] = this[b];
+    this[b] = t;
 }
 
 export function scaleByPixelRatio(input: number) {

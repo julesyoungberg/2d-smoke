@@ -28,7 +28,7 @@ export function bindFramebufferWithTexture(
     framebuffer: WebGLFramebuffer,
     width: number,
     height: number,
-    texture: any
+    texture: WebGLTexture
 ) {
     bindFramebuffer(gl, framebuffer, width, height);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
