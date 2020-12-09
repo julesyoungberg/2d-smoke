@@ -79,25 +79,13 @@ export default class FluidSimulator {
 
         buildTexture(this.gl, this.tempTexture, { ...dims, src: null });
 
-        buildTexture(this.gl, this.velocityTexture, {
-            ...dims,
-            src: new Float32Array(numCells * 4).fill(0),
-        });
+        const zeros = new Float32Array(numCells * 4).fill(0);
+        const opt = { ...dims, src: zeros };
 
-        buildTexture(this.gl, this.pressureTexture, {
-            ...dims,
-            src: new Float32Array(numCells * 4).fill(0),
-        });
-
-        buildTexture(this.gl, this.densityTexture, {
-            ...dims,
-            src: new Float32Array(numCells * 4).fill(0),
-        });
-
-        buildTexture(this.gl, this.divergenceTexture, {
-            ...dims,
-            src: new Float32Array(numCells * 4).fill(0),
-        });
+        buildTexture(this.gl, this.velocityTexture, opt);
+        buildTexture(this.gl, this.pressureTexture, opt);
+        buildTexture(this.gl, this.densityTexture, opt);
+        buildTexture(this.gl, this.divergenceTexture, opt);
     }
 
     setup() {
