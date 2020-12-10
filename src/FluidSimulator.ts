@@ -8,7 +8,6 @@ import bindFramebuffer, { bindFramebufferWithTexture } from './util/bindFramebuf
 import buildTexture from './util/buildTexture';
 import { Color, randomColor } from './util/color';
 import getResolution from './util/getResolution';
-import getTextureData from './util/getTextureData';
 
 const advectShader = require('./shaders/advect.frag');
 const addForcesShader = require('./shaders/addForces.frag');
@@ -33,8 +32,10 @@ const config = {
     PRESSURE: 0.8,
     PRESSURE_ITERATIONS: 50,
     CURL: 30,
+    REST_TEMP: 0,
     SPLAT_RADIUS: 2.0,
     SPLAT_FORCE: 6000,
+    VISCOSITY: 0.101,
 };
 
 /**
@@ -52,6 +53,7 @@ export default class FluidSimulator {
     dyeTempTexture: WebGLTexture;
     pressureTexture: WebGLTexture;
     simTexture: WebGLTexture;
+    temperatureTexture: WebGLTexture;
     velocityTexture: WebGLTexture;
     // frame buffers
     simulationFramebuffer: WebGLFramebuffer;
@@ -72,7 +74,6 @@ export default class FluidSimulator {
     // simulation state
     prevTime = 0;
     timeStep = 0;
-    viscosity = 0.101;
     pointers: Pointers;
     swap: (a: string, b: string) => void;
     simRes: twgl.v3.Vec3;
@@ -99,6 +100,7 @@ export default class FluidSimulator {
         this.dyeTempTexture = gl.createTexture();
         this.pressureTexture = gl.createTexture();
         this.simTexture = gl.createTexture();
+        this.temperatureTexture = gl.createTexture();
         this.velocityTexture = gl.createTexture();
 
         this.advectProgInfo = twgl.createProgramInfo(gl, [basicVertShader, advectShader]);
@@ -156,6 +158,7 @@ export default class FluidSimulator {
         buildTexture(this.gl, this.divergenceTexture, opt);
         buildTexture(this.gl, this.pressureTexture, opt);
         buildTexture(this.gl, this.simTexture, { ...simDimensions, src: null });
+        buildTexture(this.gl, this.temperatureTexture, opt);
         buildTexture(this.gl, this.velocityTexture, opt);
     
         const dyeDimensions = { width: dyeRes[0], height: dyeRes[1] };
@@ -243,6 +246,16 @@ export default class FluidSimulator {
         this.swap('velocityTexture', 'simTexture');
     }
 
+    advectTemperature() {
+        this.bindSimFramebuffer();
+        this.advect(
+            this.temperatureTexture,
+            Array.from(this.simTexelSize).slice(0, 2),
+            config.VELOCITY_DISSIPATION
+        );
+        this.swap('temperatureTexture', 'simTexture');
+    }
+
     advectDye() {
         this.bindDyeFramebuffer();
         this.advect(
@@ -272,7 +285,7 @@ export default class FluidSimulator {
     diffuseVelocity() {
         this.bindSimFramebuffer();
 
-        const ndt = this.viscosity * this.dt();
+        const ndt = config.VISCOSITY * this.dt();
         const alpha = this.simRes[0] ** 2 / ndt;
         const rBeta = 1 / (4 + this.simRes[0] ** 2 / ndt);
 
@@ -297,6 +310,12 @@ export default class FluidSimulator {
             resolution: this.getSimRes(),
             dt: this.dt(),
             velocityTexture: this.velocityTexture,
+            temperatureTexture: this.temperatureTexture,
+            densityTexture: this.dyeTexture,
+            gravity: 0, // 100,
+            buoyancy: 1,
+            restTemp: config.REST_TEMP,
+            k: 0.5,
         });
 
         this.swap('velocityTexture', 'simTexture');
@@ -413,6 +432,7 @@ export default class FluidSimulator {
             radius: this.scaleRadius(config.SPLAT_RADIUS / 100.0),
         };
 
+        // splat to velocity texture
         this.runSimProg(this.splatProgInfo, {
             ...common,
             color: [dx, dy, 0],
@@ -420,6 +440,15 @@ export default class FluidSimulator {
         });
         this.swap('velocityTexture', 'simTexture');
 
+        // splat to temperature texture
+        this.runSimProg(this.splatProgInfo, {
+            ...common,
+            color: [Math.sqrt(dx * dx + dy * dy), 0, 0],
+            tex: this.temperatureTexture,
+        });
+        this.swap('temperatureTexture', 'simTexture');
+
+        // splat to dye texture
         this.bindDyeFramebuffer();
         this.runProg(this.splatProgInfo, {
             ...common,
@@ -484,6 +513,7 @@ export default class FluidSimulator {
         this.subtractPressureGradient();
 
         this.advectVelocity();
+        this.advectTemperature();
         this.advectDye();
     }
 
