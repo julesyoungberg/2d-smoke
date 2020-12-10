@@ -299,13 +299,12 @@ export default class FluidSimulator {
      */
     addForces() {
         this.runSimProg(this.addForcesProgInfo, {
-            resolution: [this.simRes[0] + 1, this.simRes[1] + 1],
             dt: this.dt(),
             velocityTexture: this.velocityTexture,
             temperatureTexture: this.temperatureTexture,
             densityTexture: this.dyeTexture,
             gravity: 0, // 100,
-            buoyancy: 2,
+            buoyancy: 0,
             restTemp: config.REST_TEMP,
             k: 0.5,
         });
@@ -315,21 +314,23 @@ export default class FluidSimulator {
 
     computeCurl() {
         this.runSimProg(this.curlProgInfo, {
-            texelSize: this.simTexelSize.slice(0, 2),
+            resolution: this.simRes.slice(0, 2),
             velocity: this.velocityTexture,
         });
         this.swap('curlTexture', 'simTexture');
     }
 
     enforceVorticity() {
-        this.runSimProg(this.vorticityProgInfo, {
+        this.bindVecFramebuffer();
+        this.runProg(this.vorticityProgInfo, {
+            resolution: this.simRes.slice(0, 2),
             texelSize: this.simTexelSize.slice(0, 2),
             curlField: this.curlTexture,
             velocityField: this.velocityTexture,
             curl: config.CURL,
             dt: this.dt(),
         });
-        this.swap('velocityTexture', 'simTexture');
+        this.swap('velocityTexture', 'velocityTempTexture');
     }
 
     /**
@@ -504,7 +505,7 @@ export default class FluidSimulator {
         this.gl.disable(this.gl.BLEND);
 
         this.diffuseVelocity();
-        // this.addForces();
+        this.addForces();
 
         // this.computeCurl();
         // this.enforceVorticity();

@@ -4,7 +4,6 @@ precision highp float;
 in vec2 uv;
 out vec4 fragColor;
 
-uniform vec2 resolution;
 uniform float dt;
 uniform sampler2D velocityTexture;
 uniform sampler2D temperatureTexture;
