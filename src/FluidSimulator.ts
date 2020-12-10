@@ -44,6 +44,7 @@ const config = {
  */
 export default class FluidSimulator {
     gl: WebGLRenderingContext;
+    simulationFramebuffer: WebGLFramebuffer;
     // buffers
     quadBufferInfo: twgl.BufferInfo;
     // textures
@@ -55,9 +56,6 @@ export default class FluidSimulator {
     simTexture: WebGLTexture;
     temperatureTexture: WebGLTexture;
     velocityTexture: WebGLTexture;
-    // frame buffers
-    simulationFramebuffer: WebGLFramebuffer;
-    dyeFramebuffer: WebGLFramebuffer;
     // shader programs
     advectProgInfo: twgl.ProgramInfo;
     addForcesProgInfo: twgl.ProgramInfo;
@@ -117,7 +115,6 @@ export default class FluidSimulator {
         this.vorticityProgInfo = twgl.createProgramInfo(gl, [basicVertShader, vorticityShader]);
 
         this.simulationFramebuffer = gl.createFramebuffer();
-        this.dyeFramebuffer = gl.createFramebuffer();
 
         this.pointers = new Pointers(gl.canvas as HTMLCanvasElement);
 
@@ -196,7 +193,7 @@ export default class FluidSimulator {
     bindDyeFramebuffer(texture?: WebGLTexture) {
         bindFramebufferWithTexture(
             this.gl,
-            this.dyeFramebuffer,
+            this.simulationFramebuffer,
             this.dyeRes[0],
             this.dyeRes[1],
             texture || this.dyeTempTexture
