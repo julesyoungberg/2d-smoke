@@ -35,7 +35,7 @@ const config = {
     REST_TEMP: 0,
     SPLAT_RADIUS: 2.0,
     SPLAT_FORCE: 6000,
-    VISCOSITY: 0.101,
+    VISCOSITY: 0,
 };
 
 /**
@@ -78,6 +78,7 @@ export default class FluidSimulator {
     // simulation state
     prevTime = 0;
     timeStep = 0;
+    timeScale = 1;
     pointers: Pointers;
     swap: (a: string, b: string) => void;
     splatStack: number[] = [];
@@ -225,13 +226,10 @@ export default class FluidSimulator {
     }
 
     dt() {
-        return this.timeStep;
+        return this.timeStep * this.timeScale;
     }
 
-    /**
-     * advect the fluid density
-     */
-    advect(quantityTexture: WebGLTexture, texelSize: number[], dissipation: number) {
+    advect(texelSize: number[], dissipation: number, quantityTexture: WebGLTexture) {
         this.runProg(this.advectProgInfo, {
             texelSize,
             dissipation,
@@ -242,22 +240,12 @@ export default class FluidSimulator {
         });
     }
 
-    advectVelocity() {
-        this.bindSimFramebuffer();
-        this.advect(
-            this.velocityTexture,
-            Array.from(this.simTexelSize).slice(0, 2),
-            config.VELOCITY_DISSIPATION
-        );
-        this.swap('velocityTexture', 'simTexture');
-    }
-
     advectTemperature() {
         this.bindSimFramebuffer();
         this.advect(
-            this.temperatureTexture,
             Array.from(this.simTexelSize).slice(0, 2),
-            config.VELOCITY_DISSIPATION
+            config.VELOCITY_DISSIPATION,
+            this.temperatureTexture
         );
         this.swap('temperatureTexture', 'simTexture');
     }
@@ -265,46 +253,44 @@ export default class FluidSimulator {
     advectDye() {
         this.bindDyeFramebuffer();
         this.advect(
-            this.dyeTexture,
             Array.from(this.dyeTexelSize).slice(0, 2),
-            config.DENSITY_DISSIPATION
+            config.DENSITY_DISSIPATION,
+            this.dyeTexture
         );
         this.swap('dyeTexture', 'dyeTempTexture');
-    }
-
-    /**
-     * Generic function to run jacobi iteration program
-     */
-    runJacobiProg(alpha: number, rBeta: number, x: WebGLTexture, b: WebGLTexture) {
-        this.runProg(this.jacobiProgInfo, {
-            texelSize: this.simTexelSize.slice(0, 2),
-            alpha,
-            rBeta,
-            x,
-            b,
-        });
     }
 
     /**
      * Perform viscous diffusion on the fluid using jacobi iteration
      */
     diffuseVelocity() {
-        this.bindSimFramebuffer();
+        if (config.VISCOSITY === 0) {
+            return;
+        }
 
+        this.bindVecFramebuffer();
+
+        const dx = 1 / this.simRes[0];
         const ndt = config.VISCOSITY * this.dt();
-        const alpha = this.simRes[0] ** 2 / ndt;
-        const rBeta = 1 / (4 + this.simRes[0] ** 2 / ndt);
+        const alpha = dx ** 2 / ndt;
+        const rBeta = 1 / (4 + dx ** 2 / ndt);
 
         for (let i = 0; i < 50; i++) {
             this.gl.framebufferTexture2D(
                 this.gl.FRAMEBUFFER,
                 this.gl.COLOR_ATTACHMENT0,
                 this.gl.TEXTURE_2D,
-                this.simTexture,
+                this.velocityTempTexture,
                 0
             );
-            this.runJacobiProg(alpha, rBeta, this.velocityTexture, this.velocityTexture);
-            this.swap('velocityTexture', 'simTexture');
+            this.runProg(this.jacobiProgInfo, {
+                texelSize: [1 / (this.simRes[0] + 1), 1 / (this.simRes[1] + 1)],
+                alpha,
+                rBeta,
+                x: this.velocityTexture,
+                b: this.velocityTexture,
+            });
+            this.swap('velocityTexture', 'velocityTempTexture');
         }
     }
 
@@ -385,7 +371,13 @@ export default class FluidSimulator {
                 this.simTexture,
                 0
             );
-            this.runJacobiProg(alpha, rBeta, this.pressureTexture, this.divergenceTexture);
+            this.runProg(this.jacobiProgInfo, {
+                texelSize: this.simTexelSize.slice(0, 2),
+                alpha,
+                rBeta,
+                x: this.pressureTexture,
+                b: this.divergenceTexture,
+            });
             this.swap('pressureTexture', 'simTexture');
         }
     }
@@ -511,7 +503,7 @@ export default class FluidSimulator {
         // console.log('dt', this.timeStep * 0.5);
         this.gl.disable(this.gl.BLEND);
 
-        // this.diffuseVelocity();
+        this.diffuseVelocity();
         // this.addForces();
 
         // this.computeCurl();
@@ -528,7 +520,6 @@ export default class FluidSimulator {
 
         this.subtractPressureGradient();
 
-        // this.advectVelocity();
         this.advectTemperature();
         this.advectDye();
     }

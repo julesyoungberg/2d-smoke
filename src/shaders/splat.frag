@@ -23,7 +23,7 @@ void main() {
     vec2 coord = gl_FragCoord.xy;
 
     if (!stagger) {
-        vec3 splat = getWeight(coord) * color;
+        vec3 splat = getWeight(coord + 0.5) * color;
         vec3 base = texture(tex, uv).xyz;
 
         fragColor = vec4(base + splat, 1);
