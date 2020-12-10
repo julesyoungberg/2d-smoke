@@ -14,6 +14,7 @@ const addForcesShader = require('./shaders/addForces.frag');
 const basicFragShader = require('./shaders/basic.frag');
 const basicVertShader = require('./shaders/basic.vert');
 const boundaryShader = require('./shaders/boundary.frag');
+const clearShader = require('./shaders/clear.frag');
 const divergenceShader = require('./shaders/divergence.frag');
 const jacobiShader = require('./shaders/jacobi.frag');
 const splatShader = require('./shaders/splat.frag');
@@ -56,6 +57,7 @@ export default class FluidSimulator {
     addForcesProgInfo: twgl.ProgramInfo;
     basicProgInfo: twgl.ProgramInfo;
     boundaryProgInfo: twgl.ProgramInfo;
+    clearProgInfo: twgl.ProgramInfo;
     divergenceProgInfo: twgl.ProgramInfo;
     jacobiProgInfo: twgl.ProgramInfo;
     renderTextureProgInfo: twgl.ProgramInfo;
@@ -73,7 +75,7 @@ export default class FluidSimulator {
     dyeTexelSize: twgl.v3.Vec3;
     splatStack: number[] = [];
     running = true;
-    runN = 10;
+    runN = 4;
     ran = 0;
 
     constructor(gl: WebGLRenderingContext) {
@@ -96,6 +98,7 @@ export default class FluidSimulator {
         this.addForcesProgInfo = twgl.createProgramInfo(gl, [basicVertShader, addForcesShader]);
         this.basicProgInfo = twgl.createProgramInfo(gl, [basicVertShader, basicFragShader]);
         this.boundaryProgInfo = twgl.createProgramInfo(gl, [basicVertShader, boundaryShader]);
+        this.clearProgInfo = twgl.createProgramInfo(gl, [basicVertShader, clearShader]);
         this.divergenceProgInfo = twgl.createProgramInfo(gl, [basicVertShader, divergenceShader]);
         this.jacobiProgInfo = twgl.createProgramInfo(gl, [basicVertShader, jacobiShader]);
         this.renderTextureProgInfo = twgl.createProgramInfo(gl, [basicVertShader, textureShader]);
@@ -282,10 +285,21 @@ export default class FluidSimulator {
     }
 
     /**
+     * Clear pressure field
+     */
+    clearPressureField() {
+        this.runSimProg(this.clearProgInfo, {
+            tex: this.pressureTexture,
+            value: config.PRESSURE,
+        });
+        this.swap('pressureTexture', 'simTexture');
+    }
+
+    /**
      * Compute pressure field with jacobi iteration
      */
     computePressureField() {
-        this.bindSimFramebuffer(this.pressureTexture);
+        this.bindSimFramebuffer();
 
         const alpha = -1;
         const rBeta = 0.25;
@@ -415,6 +429,7 @@ export default class FluidSimulator {
         const divergence = getTextureData(this.gl, this.divergenceTexture, this.simRes[0], this.simRes[1]);
         console.log('divergence', Array.from(divergence).some(d => Number.isNaN(d)));
     
+        this.clearPressureField();
         this.computePressureField();
         const pressure = getTextureData(this.gl, this.pressureTexture, this.simRes[0], this.simRes[1]);
         console.log('pressure', Array.from(pressure).some(p => Number.isNaN(p)));
