@@ -21,8 +21,11 @@ void main() {
 
     if (buoyancy != 0.0) {
         float temp = texture(temperatureTexture, uv).x;
-        float density = texture(densityTexture, uv).x;
-        velocity.y += ((temp - restTemp) - k * density) * dt * buoyancy;
+        
+        if (temp > restTemp) {
+            float density = texture(densityTexture, uv).x;
+            velocity.y += ((temp - restTemp) - k * density) * dt * buoyancy;
+        }
     }
 
     fragColor = vec4(velocity, 1);

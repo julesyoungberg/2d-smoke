@@ -313,7 +313,7 @@ export default class FluidSimulator {
             temperatureTexture: this.temperatureTexture,
             densityTexture: this.dyeTexture,
             gravity: 0, // 100,
-            buoyancy: 1,
+            buoyancy: 2,
             restTemp: config.REST_TEMP,
             k: 0.5,
         });
