@@ -16,18 +16,20 @@ const basicFragShader = require('./shaders/basic.frag');
 const basicVertShader = require('./shaders/basic.vert');
 const boundaryShader = require('./shaders/boundary.frag');
 const clearShader = require('./shaders/clear.frag');
+const curlShader = require('./shaders/curl.frag');
 const divergenceShader = require('./shaders/divergence.frag');
 const jacobiShader = require('./shaders/jacobi.frag');
 const splatShader = require('./shaders/splat.frag');
 const subtractShader = require('./shaders/subtract.frag');
 const textureShader = require('./shaders/texture.frag');
+const vorticityShader = require('./shaders/vorticity.frag');
 
 const config = {
     SIM_RESOLUTION: 128,
     DYE_RESOLUTION: 512,
     CAPTURE_RESOLUTION: 512,
-    DENSITY_DISSIPATION: 0.1,
-    VELOCITY_DISSIPATION: 0.2,
+    DENSITY_DISSIPATION: 0.2,
+    VELOCITY_DISSIPATION: 0.05,
     PRESSURE: 0.8,
     PRESSURE_ITERATIONS: 50,
     CURL: 30,
@@ -44,6 +46,7 @@ export default class FluidSimulator {
     // buffers
     quadBufferInfo: twgl.BufferInfo;
     // textures
+    curlTexture: WebGLTexture;
     divergenceTexture: WebGLTexture;
     dyeTexture: WebGLTexture;
     dyeTempTexture: WebGLTexture;
@@ -59,11 +62,13 @@ export default class FluidSimulator {
     basicProgInfo: twgl.ProgramInfo;
     boundaryProgInfo: twgl.ProgramInfo;
     clearProgInfo: twgl.ProgramInfo;
+    curlProgInfo: twgl.ProgramInfo;
     divergenceProgInfo: twgl.ProgramInfo;
     jacobiProgInfo: twgl.ProgramInfo;
     renderTextureProgInfo: twgl.ProgramInfo;
     splatProgInfo: twgl.ProgramInfo;
     subtractProgInfo: twgl.ProgramInfo;
+    vorticityProgInfo: twgl.ProgramInfo;
     // simulation state
     prevTime = 0;
     timeStep = 0;
@@ -76,7 +81,7 @@ export default class FluidSimulator {
     dyeTexelSize: twgl.v3.Vec3;
     splatStack: number[] = [];
     running = true;
-    runN = 1000;
+    runN = 0;
     ran = 0;
 
     constructor(gl: WebGLRenderingContext) {
@@ -88,6 +93,7 @@ export default class FluidSimulator {
             },
         });
 
+        this.curlTexture = gl.createTexture();
         this.divergenceTexture = gl.createTexture();
         this.dyeTexture = gl.createTexture();
         this.dyeTempTexture = gl.createTexture();
@@ -100,11 +106,13 @@ export default class FluidSimulator {
         this.basicProgInfo = twgl.createProgramInfo(gl, [basicVertShader, basicFragShader]);
         this.boundaryProgInfo = twgl.createProgramInfo(gl, [basicVertShader, boundaryShader]);
         this.clearProgInfo = twgl.createProgramInfo(gl, [basicVertShader, clearShader]);
+        this.curlProgInfo = twgl.createProgramInfo(gl, [basicVertShader, curlShader]);
         this.divergenceProgInfo = twgl.createProgramInfo(gl, [basicVertShader, divergenceShader]);
         this.jacobiProgInfo = twgl.createProgramInfo(gl, [basicVertShader, jacobiShader]);
         this.renderTextureProgInfo = twgl.createProgramInfo(gl, [basicVertShader, textureShader]);
         this.splatProgInfo = twgl.createProgramInfo(gl, [basicVertShader, splatShader]);
         this.subtractProgInfo = twgl.createProgramInfo(gl, [basicVertShader, subtractShader]);
+        this.vorticityProgInfo = twgl.createProgramInfo(gl, [basicVertShader, vorticityShader]);
 
         this.simulationFramebuffer = gl.createFramebuffer();
         this.dyeFramebuffer = gl.createFramebuffer();
@@ -144,8 +152,9 @@ export default class FluidSimulator {
             src: zeros,
         };
 
-        buildTexture(this.gl, this.divergenceTexture, { ...opt, filtering: this.gl.NEAREST });
-        buildTexture(this.gl, this.pressureTexture, { ...opt, filtering: this.gl.NEAREST });
+        buildTexture(this.gl, this.curlTexture, opt);
+        buildTexture(this.gl, this.divergenceTexture, opt);
+        buildTexture(this.gl, this.pressureTexture, opt);
         buildTexture(this.gl, this.simTexture, { ...simDimensions, src: null });
         buildTexture(this.gl, this.velocityTexture, opt);
     
@@ -207,15 +216,18 @@ export default class FluidSimulator {
         return this.simRes.slice(0, 2);
     }
 
+    dt() {
+        return this.timeStep;
+    }
+
     /**
      * advect the fluid density
      */
     advect(quantityTexture: WebGLTexture, texelSize: number[], dissipation: number) {
-        const dt = this.timeStep;
         this.runProg(this.advectProgInfo, {
             texelSize,
             dissipation,
-            dt,
+            dt: this.dt(),
             velocityTexture: this.velocityTexture,
             quantityTexture,
         });
@@ -260,7 +272,7 @@ export default class FluidSimulator {
     diffuseVelocity() {
         this.bindSimFramebuffer();
 
-        const ndt = this.viscosity * this.timeStep;
+        const ndt = this.viscosity * this.dt();
         const alpha = this.simRes[0] ** 2 / ndt;
         const rBeta = 1 / (4 + this.simRes[0] ** 2 / ndt);
 
@@ -283,10 +295,29 @@ export default class FluidSimulator {
     addForces() {
         this.runSimProg(this.addForcesProgInfo, {
             resolution: this.getSimRes(),
-            timeStep: this.timeStep,
+            dt: this.dt(),
             velocityTexture: this.velocityTexture,
         });
 
+        this.swap('velocityTexture', 'simTexture');
+    }
+
+    computeCurl() {
+        this.runSimProg(this.curlProgInfo, {
+            texelSize: this.simTexelSize.slice(0, 2),
+            velocity: this.velocityTexture,
+        });
+        this.swap('curlTexture', 'simTexture');
+    }
+
+    enforceVorticity() {
+        this.runSimProg(this.vorticityProgInfo, {
+            texelSize: this.simTexelSize.slice(0, 2),
+            curlField: this.curlTexture,
+            velocityField: this.velocityTexture,
+            curl: config.CURL,
+            dt: this.dt(),
+        });
         this.swap('velocityTexture', 'simTexture');
     }
 
@@ -438,11 +469,12 @@ export default class FluidSimulator {
     runSimulation() {
         // console.log('dt', this.timeStep * 0.5);
         this.gl.disable(this.gl.BLEND);
-        this.advectVelocity();
-        this.advectDye();
 
-        // this.diffuseVelocity();
-        // this.addForces();
+        this.diffuseVelocity();
+        this.addForces();
+
+        this.computeCurl();
+        this.enforceVorticity();
     
         this.computeDivergence();
     
@@ -450,6 +482,9 @@ export default class FluidSimulator {
         this.computePressureField();
 
         this.subtractPressureGradient();
+
+        this.advectVelocity();
+        this.advectDye();
     }
 
     updateTime() {
