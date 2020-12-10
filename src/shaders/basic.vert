@@ -8,6 +8,6 @@ uniform vec2 resolution;
 
 void main() {
     uv = position.xy * 0.5 + 0.5;
-    coord = uv * resolution;
+    coord = floor(uv * resolution);
     gl_Position = position;
 }

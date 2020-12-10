@@ -402,7 +402,8 @@ export default class FluidSimulator {
      */
     enforceFieldBoundaries(x: WebGLTexture, scale: number) {
         this.runSimProg(this.boundaryProgInfo, {
-            resolution: this.getSimRes(),
+            resolution: this.simRes.slice(0, 2),
+            texelSize: this.simTexelSize.slice(0, 2),
             scale,
             x,
         });
@@ -504,11 +505,15 @@ export default class FluidSimulator {
 
         this.computeCurl();
         this.enforceVorticity();
+
+        this.enforceVelocityBoundaries();
     
         this.computeDivergence();
     
         this.clearPressureField();
         this.computePressureField();
+
+        this.enforcePressureBoundaries();
 
         this.subtractPressureGradient();
 
