@@ -26,7 +26,7 @@ const config = {
     SIM_RESOLUTION: 128,
     DYE_RESOLUTION: 512,
     CAPTURE_RESOLUTION: 512,
-    DENSITY_DISSIPATION: 1,
+    DENSITY_DISSIPATION: 0.1,
     VELOCITY_DISSIPATION: 0.2,
     PRESSURE: 0.8,
     PRESSURE_ITERATIONS: 50,
@@ -76,7 +76,7 @@ export default class FluidSimulator {
     dyeTexelSize: twgl.v3.Vec3;
     splatStack: number[] = [];
     running = true;
-    runN = 20;
+    runN = 1000;
     ran = 0;
 
     constructor(gl: WebGLRenderingContext) {
@@ -182,8 +182,8 @@ export default class FluidSimulator {
         this.prevTime = Date.now();
         this.buildTextures();
         
-        const rng = seedrandom('0');
-        this.multipleSplats(rng() * 4 + 2, rng);
+        const rng = seedrandom(Math.random());
+        this.multipleSplats(rng() * 5 + 10, rng);
 
         this.simTexelSize = twgl.v3.create(1 / this.simRes[0], 1 / this.simRes[1]);
         this.dyeTexelSize = twgl.v3.create(1 / this.dyeRes[0], 1 / this.dyeRes[1]);
@@ -236,7 +236,7 @@ export default class FluidSimulator {
      * advect the fluid density
      */
     advect(quantityTexture: WebGLTexture, texelSize: number[], dissipation: number) {
-        const dt = this.timeStep * 0.5;
+        const dt = this.timeStep;
         this.runProg(this.advectProgInfo, {
             texelSize,
             dissipation,
@@ -359,7 +359,7 @@ export default class FluidSimulator {
                 this.simTexture,
                 0
             );
-            this.runJacobiProg(alpha, rBeta, this.divergenceTexture, this.pressureTexture);
+            this.runJacobiProg(alpha, rBeta, this.pressureTexture, this.divergenceTexture);
             this.swap('pressureTexture', 'simTexture');
         }
     }
@@ -454,7 +454,7 @@ export default class FluidSimulator {
 
     applyInputs() {
         if (this.splatStack.length > 0) {
-            const rng = seedrandom('0');
+            const rng = seedrandom(Math.random());
             this.multipleSplats(this.splatStack.pop(), rng);
         }
 
@@ -470,28 +470,20 @@ export default class FluidSimulator {
      * run simulation update logic
      */
     runSimulation() {
-        console.log('dt', this.timeStep * 0.5);
+        // console.log('dt', this.timeStep * 0.5);
         this.gl.disable(this.gl.BLEND);
+        this.advectVelocity();
+        this.advectDye();
+
         // this.diffuseVelocity();
         // this.addForces();
-
-        // const velocity = getTextureData(this.gl, this.velocityTexture, this.simRes[0], this.simRes[1]);
-        // console.log('velocity', Array.from(velocity).some(v => Number.isNaN(v)));
     
         this.computeDivergence();
-        // const divergence = getTextureData(this.gl, this.divergenceTexture, this.simRes[0], this.simRes[1]);
-        // console.log('divergence', Array.from(divergence).some(d => Number.isNaN(d)));
     
         this.clearPressureField();
         this.computePressureField();
-        // const pressure = getTextureData(this.gl, this.pressureTexture, this.simRes[0], this.simRes[1]);
-        // console.log('pressure', Array.from(pressure).some(p => Number.isNaN(p)));
 
         this.subtractPressureGradient();
-
-        this.advectVelocity();
-        this.advectDye();
-        // console.log(getTextureData(this.gl, this.divergenceTexture, this.res, this.res));
     }
 
     updateTime() {
