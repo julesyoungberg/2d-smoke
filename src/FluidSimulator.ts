@@ -7,6 +7,7 @@ import bindFramebuffer, { bindFramebufferWithTexture } from './util/bindFramebuf
 import buildTexture from './util/buildTexture';
 import { Color, randomColor } from './util/color';
 import getResolution from './util/getResolution';
+import getTextureData from './util/getTextureData';
 
 const advectShader = require('./shaders/advect.frag');
 const addForcesShader = require('./shaders/addForces.frag');
@@ -63,7 +64,6 @@ export default class FluidSimulator {
     // simulation state
     prevTime = 0;
     timeStep = 0;
-    timeScale = 0.001;
     viscosity = 0.101;
     pointers: Pointers;
     swap: (a: string, b: string) => void;
@@ -73,6 +73,8 @@ export default class FluidSimulator {
     dyeTexelSize: twgl.v3.Vec3;
     splatStack: number[] = [];
     running = true;
+    runN = 10;
+    ran = 0;
 
     constructor(gl: WebGLRenderingContext) {
         this.gl = gl;
@@ -143,6 +145,7 @@ export default class FluidSimulator {
     }
 
     setup() {
+        this.ran = 0;
         this.buildTextures();
         this.multipleSplats(Math.random() * 4 + 2);
         this.simTexelSize = twgl.v3.create(1 / this.simRes[0], 1 / this.simRes[1]);
@@ -404,12 +407,30 @@ export default class FluidSimulator {
         this.gl.disable(this.gl.BLEND);
         // this.diffuseVelocity();
         // this.addForces();
-        // this.computeDivergence();
-        // this.computePressureField();
-        // this.subtractPressureGradient();
-        // this.advectVelocity();
-        // this.advectDye();
+
+        const velocity = getTextureData(this.gl, this.velocityTexture, this.simRes[0], this.simRes[1]);
+        console.log('velocity', Array.from(velocity).some(v => Number.isNaN(v)));
+    
+        this.computeDivergence();
+        const divergence = getTextureData(this.gl, this.divergenceTexture, this.simRes[0], this.simRes[1]);
+        console.log('divergence', Array.from(divergence).some(d => Number.isNaN(d)));
+    
+        this.computePressureField();
+        const pressure = getTextureData(this.gl, this.pressureTexture, this.simRes[0], this.simRes[1]);
+        console.log('pressure', Array.from(pressure).some(p => Number.isNaN(p)));
+
+        this.subtractPressureGradient();
+
+        this.advectVelocity();
+        this.advectDye();
         // console.log(getTextureData(this.gl, this.divergenceTexture, this.res, this.res));
+    }
+
+    updateTime(time: number) {
+        const now = Date.now();
+        const dt = (now - this.prevTime) / 1000;
+        this.timeStep = Math.min(dt, 0.016666);
+        this.prevTime = time;
     }
 
     /**
@@ -417,13 +438,15 @@ export default class FluidSimulator {
      * @param time
      */
     update(time: number) {
-        this.timeStep = time - this.prevTime;
-        this.prevTime = time;
-
+        this.updateTime(time);
         this.applyInputs();
-
         if (this.running) {
-            this.runSimulation();
+        this.runSimulation();
+            this.ran++;
+
+            if (this.runN > 0 && this.ran >= this.runN) {
+                this.running = false;
+            }
         }
     }
 
@@ -437,7 +460,7 @@ export default class FluidSimulator {
 
     drawTexture(tex: WebGLTexture) {
         this.runProg(this.renderTextureProgInfo, {
-            time: this.getTime() * this.timeScale,
+            time: this.getTime(),
             resolution: [this.gl.canvas.width, this.gl.canvas.height],
             tex,
         });
@@ -449,8 +472,8 @@ export default class FluidSimulator {
     draw() {
         bindFramebuffer(this.gl, null, this.gl.canvas.width, this.gl.canvas.height);
         // Clear the canvas AND the depth buffer.
-        this.gl.clearColor(1, 1, 1, 1); // clear to white
+        this.gl.clearColor(0, 0, 0, 1);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
-        this.drawTexture(this.velocityTexture);
+        this.drawTexture(this.dyeTexture);
     }
 }

@@ -25,7 +25,7 @@ export default function getTextureData(
     gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
     if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE) {
-        gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+        gl.readPixels(0, 0, width, height, gl.RGBA, gl.FLOAT, pixels);
     }
 
     // unbind this framebuffer so its memory can be reclaimed.
