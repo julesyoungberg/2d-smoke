@@ -227,11 +227,6 @@ export default class FluidSimulator {
         return this.simRes.slice(0, 2);
     }
 
-    bindTexture(texture: WebGLTexture, id: number) {
-        this.gl.activeTexture(this.gl.TEXTURE0 + id);
-        this.gl.bindTexture(this.gl.TEXTURE_2D, this.divergenceTexture);
-    }
-
     /**
      * advect the fluid density
      */
@@ -270,8 +265,6 @@ export default class FluidSimulator {
      * Generic function to run jacobi iteration program
      */
     runJacobiProg(alpha: number, rBeta: number, x: WebGLTexture, b: WebGLTexture) {
-        this.bindTexture(x, 0);
-        this.bindTexture(b, 1);
         this.runProg(this.jacobiProgInfo, {
             texelSize: this.simTexelSize.slice(0, 2),
             alpha,
@@ -308,7 +301,6 @@ export default class FluidSimulator {
      * apply external forces to velocity field
      */
     addForces() {
-        this.bindTexture(this.velocityTexture, 0);
         this.runSimProg(this.addForcesProgInfo, {
             resolution: this.getSimRes(),
             timeStep: this.timeStep,
@@ -323,7 +315,6 @@ export default class FluidSimulator {
      */
     computeDivergence() {
         this.bindSimFramebuffer(this.divergenceTexture);
-        this.bindTexture(this.velocityTexture, 0);
         this.runProg(this.divergenceProgInfo, {
             texelSize: this.simTexelSize.slice(0, 2),
             w: this.velocityTexture,
@@ -334,7 +325,6 @@ export default class FluidSimulator {
      * Clear pressure field
      */
     clearPressureField() {
-        this.bindTexture(this.pressureTexture, 0);
         this.runSimProg(this.clearProgInfo, {
             tex: this.pressureTexture,
             value: config.PRESSURE,
@@ -368,9 +358,6 @@ export default class FluidSimulator {
      * Subtract pressure field gradient from intermediate velocity field
      */
     subtractPressureGradient() {
-        this.bindTexture(this.pressureTexture, 0);
-        this.bindTexture(this.velocityTexture, 1);
-
         this.runSimProg(this.subtractProgInfo, {
             texelSize: this.simTexelSize.slice(0, 2),
             pressureField: this.pressureTexture,
@@ -384,7 +371,6 @@ export default class FluidSimulator {
      * Enforce boundary conditions on a given field
      */
     enforceFieldBoundaries(x: WebGLTexture, scale: number) {
-        this.bindTexture(x, 0);
         this.runSimProg(this.boundaryProgInfo, {
             resolution: this.getSimRes(),
             scale,
@@ -518,7 +504,6 @@ export default class FluidSimulator {
     }
 
     drawTexture(tex: WebGLTexture) {
-        this.bindTexture(tex, 0);
         this.runProg(this.renderTextureProgInfo, {
             time: this.getTime(),
             resolution: [this.gl.canvas.width, this.gl.canvas.height],
