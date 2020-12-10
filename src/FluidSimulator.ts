@@ -409,7 +409,10 @@ export default class FluidSimulator {
     }
 
     enforceVelocityBoundaries() {
-        this.enforceFieldBoundaries(this.velocityTexture, -1, [this.simRes[0] + 1, this.simRes[1] + 1]);
+        this.enforceFieldBoundaries(this.velocityTexture, -1, [
+            this.simRes[0] + 1,
+            this.simRes[1] + 1,
+        ]);
     }
 
     enforcePressureBoundaries() {
@@ -553,7 +556,9 @@ export default class FluidSimulator {
     }
 
     drawBasic() {
-        this.runProg(this.basicProgInfo, {});
+        this.runProg(this.basicProgInfo, {
+            resolution: [this.gl.canvas.width, this.gl.canvas.height],
+        });
     }
 
     drawTexture(tex: WebGLTexture) {
@@ -571,6 +576,7 @@ export default class FluidSimulator {
         bindFramebuffer(this.gl, null, this.gl.canvas.width, this.gl.canvas.height);
         this.gl.clearColor(0, 0, 0, 1);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+        // this.drawBasic();
         this.drawTexture(this.dyeTexture);
     }
 }
