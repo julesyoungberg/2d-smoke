@@ -138,43 +138,23 @@ export default class FluidSimulator {
 
         const zeros = new Float32Array(numCells * 4).fill(0);
         const simDimensions = { width: simRes[0], height: simRes[1] };
-        const dyeDimensions = { width: dyeRes[0], height: dyeRes[1] };
         const opt = {
             ...simDimensions,
             ...common,
             src: zeros,
         };
-        const dyeOpt = { ...dyeDimensions, ...common };
 
-        const useTwglTextures = false;
-
-        if (useTwglTextures) {
-            const textures = twgl.createTextures(this.gl, {
-                divergence: opt,
-                pressure: opt,
-                sim: { ...opt, src: null },
-                velocity: opt,
-                dye: { ...dyeOpt, src: new Float32Array(dyeRes[0] * dyeRes[1] * 4) },
-                dyeTemp: { ...dyeOpt, src: null },
-            });
-            this.divergenceTexture = textures.divergence;
-            this.pressureTexture = textures.pressure
-            this.simTexture = textures.sim;
-            this.velocityTexture = textures.velocity;
-            this.dyeTexture = textures.dye;
-            this.dyeTempTexture = textures.dyeTemp;
-        } else {
-            buildTexture(this.gl, this.divergenceTexture, { ...opt, filtering: this.gl.NEAREST });
-            buildTexture(this.gl, this.pressureTexture, { ...opt, filtering: this.gl.NEAREST });
-            buildTexture(this.gl, this.simTexture, { ...simDimensions, src: null });
-            buildTexture(this.gl, this.velocityTexture, opt);
-        
-            buildTexture(this.gl, this.dyeTexture, {
-                ...dyeDimensions,
-                src: new Float32Array(dyeRes[0] * dyeRes[1] * 4),
-            });
-            buildTexture(this.gl, this.dyeTempTexture, { ...dyeDimensions, src: null });
-        }
+        buildTexture(this.gl, this.divergenceTexture, { ...opt, filtering: this.gl.NEAREST });
+        buildTexture(this.gl, this.pressureTexture, { ...opt, filtering: this.gl.NEAREST });
+        buildTexture(this.gl, this.simTexture, { ...simDimensions, src: null });
+        buildTexture(this.gl, this.velocityTexture, opt);
+    
+        const dyeDimensions = { width: dyeRes[0], height: dyeRes[1] };
+        buildTexture(this.gl, this.dyeTexture, {
+            ...dyeDimensions,
+            src: new Float32Array(dyeRes[0] * dyeRes[1] * 4),
+        });
+        buildTexture(this.gl, this.dyeTempTexture, { ...dyeDimensions, src: null });
     }
 
     setup() {
