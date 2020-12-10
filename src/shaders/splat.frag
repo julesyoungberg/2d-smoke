@@ -10,13 +10,32 @@ uniform float aspectRatio;
 uniform vec3 color;
 uniform vec2 point;
 uniform float radius;
+uniform bool stagger;
+
+float getWeight(vec2 c) {
+    vec2 cUv = c / resolution;
+    vec2 p = cUv - point;
+    p.x *= aspectRatio;
+    return exp(-dot(p, p) / radius);
+}
 
 void main() {
-    vec2 p = uv - point;
-    p.x *= aspectRatio;
+    vec2 coord = gl_FragCoord.xy;
 
-    vec3 splat = exp(-dot(p, p) / radius) * color;
-    vec3 base = texture(tex, uv).xyz;
+    if (!stagger) {
+        vec3 splat = getWeight(coord) * color;
+        vec3 base = texture(tex, uv).xyz;
 
-    fragColor = vec4(base + splat, 1);
+        fragColor = vec4(base + splat, 1);
+    } else {
+        float xWeight = getWeight(coord + vec2(0, 0.5));
+        float xVal = xWeight * color.x;
+
+        float yWeight = getWeight(coord + vec2(0.5, 0));
+        float yVal = yWeight * color.y;
+
+        vec3 base = texture(tex, coord / (resolution + 1.0)).xyz;
+
+        fragColor = vec4(base + vec3(xVal, yVal, 0), 1);
+    }
 }

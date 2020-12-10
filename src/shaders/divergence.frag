@@ -4,26 +4,20 @@ precision highp float;
 in vec2 uv;
 out vec4 fragColor;
 
-uniform vec2 texelSize;
+uniform vec2 resolution;
 uniform sampler2D w;
 
 void main() {
-    vec2 lUv = uv - vec2(texelSize.x, 0);
-    vec2 rUv = uv + vec2(texelSize.x, 0);
-    vec2 bUv = uv - vec2(0, texelSize.y);
-    vec2 tUv = uv + vec2(0, texelSize.y);
+    vec2 coord = gl_FragCoord.xy;
+    vec2 base = texture(w, coord / (resolution + 1.0)).xy;
+    vec2 rUv = (coord + vec2(1, 0)) / (resolution + 1.0);
+    vec2 tUv = (coord + vec2(0, 1)) / (resolution + 1.0);
 
     // left, right, bottom, and top x samples
-    float L = texture(w, uv - vec2(texelSize.x, 0)).x;
-    float R = texture(w, uv + vec2(texelSize.x, 0)).x;
-    float B = texture(w, uv - vec2(0, texelSize.y)).y;
-    float T = texture(w, uv + vec2(0, texelSize.y)).y;
-
-    vec2 C = texture(w, uv).xy;
-    if (lUv.x < 0.0) L = -C.x;
-    if (rUv.x > 1.0) R = -C.x;
-    if (tUv.y > 1.0) R = -C.y;
-    if (bUv.y < 0.0) B = -C.y; 
+    float L = base.x;
+    float R = texture(w, rUv).x;
+    float B = base.y;
+    float T = texture(w, tUv).y;
 
     float divergence = 0.5 * (R - L + T - B);
     fragColor = vec4(divergence, 0, 0, 1);

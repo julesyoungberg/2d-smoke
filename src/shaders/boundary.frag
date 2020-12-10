@@ -2,7 +2,6 @@
 precision highp float;
 
 in vec2 uv;
-in vec2 coord;
 out vec4 fragColor;
 
 uniform vec2 resolution;
@@ -15,6 +14,7 @@ vec4 fetchVal(vec2 c) {
 }
 
 void main() {
+    vec2 coord = gl_FragCoord.xy;
     if (coord.x == 0.0) {
         // left edge
         if (coord.y == 0.0 || coord.y == resolution.y - 1.0) {
