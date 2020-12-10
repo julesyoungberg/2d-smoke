@@ -10,9 +10,5 @@ uniform sampler2D tex;
 
 void main() {
     vec3 v = texture(tex, uv).xyz;
-    if (any(lessThan(v, vec3(0)))) {
-        v = vec3(1, 0, 0);
-    }
-
     fragColor = vec4(v, 1);
 }

@@ -8,11 +8,11 @@ const gl = createContext();
 const fluidSimulator = new FluidSimulator(gl);
 fluidSimulator.setup();
 
-function render(time: number) {
+function render() {
     twgl.resizeCanvasToDisplaySize(gl.canvas as HTMLCanvasElement);
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
-    fluidSimulator.update(time);
+    fluidSimulator.update();
     fluidSimulator.draw();
 
     requestAnimationFrame(render);
