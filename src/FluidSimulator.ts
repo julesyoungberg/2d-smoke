@@ -160,7 +160,7 @@ export default class FluidSimulator {
             src: new Float32Array(velDimensions.width * velDimensions.height * 4).fill(0),
         });
         buildTexture(this.gl, this.velocityTempTexture, { ...velDimensions, src: null });
-    
+
         const dyeDimensions = { width: dyeRes[0], height: dyeRes[1] };
         buildTexture(this.gl, this.dyeTexture, {
             ...dyeDimensions,
@@ -173,7 +173,7 @@ export default class FluidSimulator {
         this.ran = 0;
         this.prevTime = Date.now();
         this.buildTextures();
-        
+
         const rng = seedrandom(Math.random());
         this.multipleSplats(rng() * 5 + 10, rng);
 
@@ -399,9 +399,9 @@ export default class FluidSimulator {
     /**
      * Enforce boundary conditions on a given field
      */
-    enforceFieldBoundaries(x: WebGLTexture, scale: number) {
+    enforceFieldBoundaries(x: WebGLTexture, scale: number, resolution: number[]) {
         this.runSimProg(this.boundaryProgInfo, {
-            resolution: this.simRes.slice(0, 2),
+            resolution,
             texelSize: this.simTexelSize.slice(0, 2),
             scale,
             x,
@@ -409,11 +409,11 @@ export default class FluidSimulator {
     }
 
     enforceVelocityBoundaries() {
-        this.enforceFieldBoundaries(this.velocityTexture, -1);
+        this.enforceFieldBoundaries(this.velocityTexture, -1, [this.simRes[0] + 1, this.simRes[1] + 1]);
     }
 
     enforcePressureBoundaries() {
-        this.enforceFieldBoundaries(this.pressureTexture, 1);
+        this.enforceFieldBoundaries(this.pressureTexture, 1, Array.from(this.simRes).slice(0, 2));
     }
 
     scaleRadius(r: number) {
@@ -510,10 +510,10 @@ export default class FluidSimulator {
         // this.computeCurl();
         // this.enforceVorticity();
 
-        // this.enforceVelocityBoundaries();
-    
+        this.enforceVelocityBoundaries();
+
         this.computeDivergence();
-    
+
         this.clearPressureField();
         this.computePressureField();
 
