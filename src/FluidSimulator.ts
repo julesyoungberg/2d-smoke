@@ -1,3 +1,4 @@
+import seedrandom from 'seedrandom';
 import * as twgl from 'twgl.js';
 
 import Pointer from './Pointer';
@@ -75,7 +76,7 @@ export default class FluidSimulator {
     dyeTexelSize: twgl.v3.Vec3;
     splatStack: number[] = [];
     running = true;
-    runN = 4;
+    runN = 6;
     ran = 0;
 
     constructor(gl: WebGLRenderingContext) {
@@ -149,8 +150,12 @@ export default class FluidSimulator {
 
     setup() {
         this.ran = 0;
+        this.prevTime = Date.now();
         this.buildTextures();
-        this.multipleSplats(Math.random() * 4 + 2);
+        
+        const rng = seedrandom('0');
+        this.multipleSplats(rng() * 4 + 2, rng);
+
         this.simTexelSize = twgl.v3.create(1 / this.simRes[0], 1 / this.simRes[1]);
         this.dyeTexelSize = twgl.v3.create(1 / this.dyeRes[0], 1 / this.dyeRes[1]);
     }
@@ -195,10 +200,12 @@ export default class FluidSimulator {
      * advect the fluid density
      */
     advect(quantityTexture: WebGLTexture, texelSize: number[], decay: number) {
+        const timeStep = this.timeStep * 0.01;
+        console.log('dt', timeStep);
         this.runProg(this.advectProgInfo, {
             texelSize,
             decay,
-            timeStep: this.timeStep,
+            timeStep,
             velocityTexture: this.velocityTexture,
             quantityTexture,
         });
@@ -381,16 +388,16 @@ export default class FluidSimulator {
         this.swap('dyeTexture', 'dyeTempTexture');
     }
 
-    multipleSplats(nSplats: number) {
+    multipleSplats(nSplats: number, rng: () => number) {
         for (let i = 0; i < nSplats; i++) {
             const color = randomColor();
             color.r *= 10.0;
             color.g *= 10.0;
             color.b *= 10.0;
-            const x = Math.random();
-            const y = Math.random();
-            const dx = 1000 * (Math.random() - 0.5);
-            const dy = 1000 * (Math.random() - 0.5);
+            const x = rng();
+            const y = rng();
+            const dx = 1000 * (rng() - 0.5);
+            const dy = 1000 * (rng() - 0.5);
             this.splat(x, y, dx, dy, color);
         }
     }
@@ -403,7 +410,8 @@ export default class FluidSimulator {
 
     applyInputs() {
         if (this.splatStack.length > 0) {
-            this.multipleSplats(this.splatStack.pop());
+            const rng = seedrandom('0');
+            this.multipleSplats(this.splatStack.pop(), rng);
         }
 
         this.pointers.pointers.forEach((p) => {
@@ -422,17 +430,17 @@ export default class FluidSimulator {
         // this.diffuseVelocity();
         // this.addForces();
 
-        const velocity = getTextureData(this.gl, this.velocityTexture, this.simRes[0], this.simRes[1]);
-        console.log('velocity', Array.from(velocity).some(v => Number.isNaN(v)));
+        // const velocity = getTextureData(this.gl, this.velocityTexture, this.simRes[0], this.simRes[1]);
+        // console.log('velocity', Array.from(velocity).some(v => Number.isNaN(v)));
     
         this.computeDivergence();
-        const divergence = getTextureData(this.gl, this.divergenceTexture, this.simRes[0], this.simRes[1]);
-        console.log('divergence', Array.from(divergence).some(d => Number.isNaN(d)));
+        // const divergence = getTextureData(this.gl, this.divergenceTexture, this.simRes[0], this.simRes[1]);
+        // console.log('divergence', Array.from(divergence).some(d => Number.isNaN(d)));
     
         this.clearPressureField();
         this.computePressureField();
-        const pressure = getTextureData(this.gl, this.pressureTexture, this.simRes[0], this.simRes[1]);
-        console.log('pressure', Array.from(pressure).some(p => Number.isNaN(p)));
+        // const pressure = getTextureData(this.gl, this.pressureTexture, this.simRes[0], this.simRes[1]);
+        // console.log('pressure', Array.from(pressure).some(p => Number.isNaN(p)));
 
         this.subtractPressureGradient();
 
@@ -441,11 +449,11 @@ export default class FluidSimulator {
         // console.log(getTextureData(this.gl, this.divergenceTexture, this.res, this.res));
     }
 
-    updateTime(time: number) {
+    updateTime() {
         const now = Date.now();
         const dt = (now - this.prevTime) / 1000;
-        this.timeStep = Math.min(dt, 0.016666);
-        this.prevTime = time;
+        this.timeStep = dt; // Math.min(dt, 0.016666);
+        this.prevTime = now;
     }
 
     /**
@@ -453,7 +461,7 @@ export default class FluidSimulator {
      * @param time
      */
     update(time: number) {
-        this.updateTime(time);
+        this.updateTime();
         this.applyInputs();
         if (this.running) {
         this.runSimulation();

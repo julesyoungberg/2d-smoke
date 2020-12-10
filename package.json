@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "dat.gui": "^0.7.7",
+    "seedrandom": "^3.0.5",
     "twgl.js": "^4.17.0"
   },
   "devDependencies": {
