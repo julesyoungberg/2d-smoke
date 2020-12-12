@@ -8,8 +8,6 @@ const noise = makeNoise2D(Date.now());
 type ColorMode = 'rainbow' | 'static';
 
 export default class FluidConfig {
-    gui: GUI;
-
     // texture resolutions
     simResolution = 128;
     dyeResolution = 512;
@@ -42,39 +40,43 @@ export default class FluidConfig {
     noiseX = 0.0;
 
     constructor(gui: GUI) {
-        this.gui = gui;
         this.colorOffset = Math.random();
 
-        gui.add(this, 'colorMode', ['rainbow', 'static']).onChange((val) => {
+        // main controls
+        gui.add(this, 'vorticity', 0, 100);
+
+        const color = gui.addFolder('color');
+        color.open();
+        color.add(this, 'colorMode', ['rainbow', 'static']).onChange((val) => {
             if (val === 'static') {
                 this.color = this.getCurrentColor().map(c => c * 255 * 50);
             }
             gui.updateDisplay();
         });
-        gui.add(this, 'colorRate', 0, 10);
-        gui.addColor(this, 'color');
+        color.add(this, 'colorRate', 0, 10);
+        color.addColor(this, 'color');
 
-        gui.add(this, 'densityDissipation', 0, 0.5);
-        gui.add(this, 'velocityDissipation', 0, 0.5);
-        gui.add(this, 'temperatureDissipation', 0, 0.5);
+        const fluid = gui.addFolder('fluid properties');
+        fluid.add(this, 'densityDissipation', 0, 0.5);
+        fluid.add(this, 'velocityDissipation', 0, 0.5);
+        fluid.add(this, 'temperatureDissipation', 0, 0.5);
+        fluid.add(this, 'buoyancy', 0, 2);
+        // .add(this, 'buoyancyKappa', 0, 1);
+        // .add(this, 'buoyancySigma', 0, 1);
+        fluid.add(this, 'gravity', 0, 30);
+        fluid.add(this, 'pressure', 0, 1);
+        fluid.add(this, 'restTemp', 0, 30);
+        fluid.add(this, 'viscosity', 0, 500);
 
-        gui.add(this, 'buoyancy', 0, 2);
-        gui.add(this, 'buoyancyKappa', 0, 1);
-        gui.add(this, 'buoyancySigma', 0, 1);
-        gui.add(this, 'gravity', 0, 30);
-        gui.add(this, 'pressure', 0, 1);
-        gui.add(this, 'restTemp', 0, 30);
-        gui.add(this, 'viscosity', 0, 500);
-        gui.add(this, 'vorticity', 0, 100);
-
-        gui.add(this, 'splatRadius', 0, 0.5);
-        gui.add(this, 'splatForce', 0, 10000);
+        const controls = gui.addFolder('simulation');
+        controls.add(this, 'splatRadius', 0, 0.5);
+        controls.add(this, 'splatForce', 0, 10000);
     }
 
     getCurrentColor() {
         const n = (noise(this.noiseX, 0) + 1) * 0.5;
         this.noiseX += this.colorRate / 40000;
-        return hsvToRgb((n * 3 + this.colorOffset) % 1, 0.8, 0.5).map(c => c / 40);
+        return hsvToRgb((n + this.colorOffset) % 1, 0.8, 0.5).map(c => c / 40);
     }
 
     getColor() {

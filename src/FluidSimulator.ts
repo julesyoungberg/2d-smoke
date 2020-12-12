@@ -73,6 +73,7 @@ export default class FluidSimulator {
 
     constructor(gl: WebGLRenderingContext, gui: GUI) {
         this.gl = gl;
+        gui.add({ RESTART: this.reset.bind(this) }, 'RESTART');
         this.config = new FluidConfig(gui);
         this.quadBufferInfo = twgl.createBufferInfoFromArrays(gl, {
             position: {
@@ -168,6 +169,10 @@ export default class FluidSimulator {
         this.dyeTexelSize = twgl.v3.create(1 / this.dyeRes[0], 1 / this.dyeRes[1]);
 
         this.update();
+    }
+
+    reset() {
+        this.setup();
     }
 
     bindSimFramebuffer(texture?: WebGLTexture) {
@@ -491,8 +496,10 @@ export default class FluidSimulator {
         // this.diffuseVelocity();
         this.addForces();
 
-        this.computeCurl();
-        this.enforceVorticity();
+        if (this.config.vorticity > 0) {
+            this.computeCurl();
+            this.enforceVorticity();
+        }
 
         this.enforceVelocityBoundaries();
     
