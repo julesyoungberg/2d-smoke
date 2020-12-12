@@ -2,6 +2,8 @@
 
 Eulerian smoke simulation built with WebGL and TypeScript.
 
+template: https://github.com/julesyoungberg/typescript-twgl-template
+
 demo: https://2d-smoke.vercel.app/
 
 Based on:
