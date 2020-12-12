@@ -4,8 +4,6 @@ precision highp float;
 in vec2 uv;
 out vec4 fragColor;
 
-uniform vec2 resolution;
-uniform float time;
 uniform sampler2D tex;
 
 void main() {

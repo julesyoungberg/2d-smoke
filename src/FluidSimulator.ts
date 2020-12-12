@@ -19,6 +19,8 @@ const boundaryShader = require('./shaders/boundary.frag');
 const clearShader = require('./shaders/clear.frag');
 const curlShader = require('./shaders/curl.frag');
 const divergenceShader = require('./shaders/divergence.frag');
+const dptShader = require('./shaders/dpt.frag');
+const fluidShader = require('./shaders/fluid.frag');
 const jacobiShader = require('./shaders/jacobi.frag');
 const splatShader = require('./shaders/splat.frag');
 const subtractShader = require('./shaders/subtract.frag');
@@ -53,6 +55,8 @@ export default class FluidSimulator {
     curlProgInfo: twgl.ProgramInfo;
     divergenceProgInfo: twgl.ProgramInfo;
     jacobiProgInfo: twgl.ProgramInfo;
+    renderDptProgInfo: twgl.ProgramInfo;
+    renderFluidProgInfo: twgl.ProgramInfo;
     renderTextureProgInfo: twgl.ProgramInfo;
     splatProgInfo: twgl.ProgramInfo;
     subtractProgInfo: twgl.ProgramInfo;
@@ -112,6 +116,8 @@ export default class FluidSimulator {
         this.curlProgInfo = twgl.createProgramInfo(gl, [basicVertShader, curlShader]);
         this.divergenceProgInfo = twgl.createProgramInfo(gl, [basicVertShader, divergenceShader]);
         this.jacobiProgInfo = twgl.createProgramInfo(gl, [basicVertShader, jacobiShader]);
+        this.renderDptProgInfo = twgl.createProgramInfo(gl, [basicVertShader, dptShader]);
+        this.renderFluidProgInfo = twgl.createProgramInfo(gl, [basicVertShader, fluidShader]);
         this.renderTextureProgInfo = twgl.createProgramInfo(gl, [basicVertShader, textureShader]);
         this.splatProgInfo = twgl.createProgramInfo(gl, [basicVertShader, splatShader]);
         this.subtractProgInfo = twgl.createProgramInfo(gl, [basicVertShader, subtractShader]);
@@ -563,12 +569,25 @@ export default class FluidSimulator {
         this.runProg(this.basicProgInfo, {});
     }
 
-    drawTexture(tex: WebGLTexture) {
-        this.runProg(this.renderTextureProgInfo, {
-            time: this.getTime(),
-            resolution: [this.gl.canvas.width, this.gl.canvas.height],
-            tex,
+    drawDpt() {
+        this.runProg(this.renderDptProgInfo, {
+            divergence: this.divergenceTexture,
+            pressure: this.pressureTexture,
+            temperature: this.temperatureTexture,
         });
+    }
+
+    drawFluid() {
+        this.runProg(this.renderFluidProgInfo, {
+            dye: this.dyeTexture,
+            pressure: this.pressureTexture,
+            temperature: this.temperatureTexture,
+            velocity: this.velocityTexture,
+        });
+    }
+
+    drawTexture(tex: WebGLTexture) {
+        this.runProg(this.renderTextureProgInfo, { tex });
     }
 
     /**
@@ -578,6 +597,19 @@ export default class FluidSimulator {
         bindFramebuffer(this.gl, null, this.gl.canvas.width, this.gl.canvas.height);
         this.gl.clearColor(0, 0, 0, 1);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
-        this.drawTexture(this.dyeTexture);
+
+        switch(this.config.renderMode) {
+            case 'dpt':
+                this.drawDpt();
+                break;
+            case 'velocity':
+                this.drawTexture(this.velocityTexture);
+                break;
+            case 'fluid':
+                this.drawFluid();
+                break;
+            default:
+                this.drawTexture(this.dyeTexture);
+        }
     }
 }
