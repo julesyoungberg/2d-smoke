@@ -480,14 +480,14 @@ export default class FluidSimulator {
             const y = rng();
             const dx = 1000 * (rng() - 0.5);
             const dy = 1000 * (rng() - 0.5);
-            this.splat(x, y, dx, dy, color);
+            this.splat(x, y, dx, dy, color, this.config.pointerMode === 'hand');
         }
     }
 
     splatPointer(p: Pointer) {
         const dx = p.deltaX * this.config.splatForce;
         const dy = p.deltaY * this.config.splatForce;
-        this.splat(p.x, p.y, dx, dy, p.color, true);
+        this.splat(p.x, p.y, dx, dy, p.color, this.config.pointerMode === 'hand');
     }
 
     applyInputs() {
@@ -504,7 +504,7 @@ export default class FluidSimulator {
         });
 
         // apply constant input
-        this.splat(0.5, 0, 0, 1, this.config.getColor());
+        this.splat(0.5, 0, 0, 2, this.config.getColor());
     }
 
     /**
