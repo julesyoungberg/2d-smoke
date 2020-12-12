@@ -488,7 +488,7 @@ export default class FluidSimulator {
         // console.log('dt', this.timeStep * 0.5);
         this.gl.disable(this.gl.BLEND);
 
-        this.diffuseVelocity();
+        // this.diffuseVelocity();
         this.addForces();
 
         this.computeCurl();

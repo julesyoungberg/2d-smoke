@@ -21,20 +21,20 @@ export default class FluidConfig {
     buoyancySigma = 0.1;
     color = [100, 100, 100];
     densityDissipation = 0.01;
-    gravity = 0; // 100;
-    pressure = 0.8;
+    gravity = 5;
+    pressure = 0.1;
     // rest temperature of the fluid
     // 10 for smok
     // 15 for clouds
     restTemp = 10;
     temperatureDissipation = 0.01;
-    velocityDissipation = 0.01;
+    velocityDissipation = 0.0;
     viscosity = 0.101;
     vorticity = 40;
 
     // sim config
     colorMode: ColorMode = 'rainbow';
-    colorRate = 1;
+    colorRate = 5;
     colorOffset = 0;
     pressureIterations = 50;
     splatRadius = 0.1;
@@ -61,13 +61,13 @@ export default class FluidConfig {
         gui.add(this, 'buoyancy', 0, 2);
         gui.add(this, 'buoyancyKappa', 0, 1);
         gui.add(this, 'buoyancySigma', 0, 1);
-        gui.add(this, 'gravity', 0, 1000);
+        gui.add(this, 'gravity', 0, 30);
         gui.add(this, 'pressure', 0, 1);
         gui.add(this, 'restTemp', 0, 30);
         gui.add(this, 'viscosity', 0, 500);
         gui.add(this, 'vorticity', 0, 100);
 
-        gui.add(this, 'splatRadius', 0.001, 10);
+        gui.add(this, 'splatRadius', 0, 0.5);
         gui.add(this, 'splatForce', 0, 10000);
     }
 
