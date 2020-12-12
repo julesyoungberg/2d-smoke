@@ -20,15 +20,15 @@ export default class FluidConfig {
     buoyancyKappa = 0.25;
     buoyancySigma = 0.1;
     color = [100, 100, 100];
-    densityDissipation = 0.02;
+    densityDissipation = 0.05;
     gravity = 5;
     pressure = 0.8;
     // rest temperature of the fluid
     // 10 for smok
     // 15 for clouds
     restTemp = 10;
-    temperatureDissipation = 0.02;
-    velocityDissipation = 0.02;
+    temperatureDissipation = 0.05;
+    velocityDissipation = 0.05;
     viscosity = 0.101;
     vorticity = 40;
 
@@ -37,10 +37,10 @@ export default class FluidConfig {
     colorRate = 5;
     colorOffset = 0;
     noiseX = 0.0;
-    pointerMode: PointerMode = 'hand';
+    pointerMode: PointerMode = 'flame';
     pressureIterations = 50;
     renderMode: RenderMode = 'color';
-    splatRadius = 0.1;
+    splatRadius = 0.15;
     splatForce = 6000;
 
     constructor(gui: GUI) {
