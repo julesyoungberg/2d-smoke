@@ -73,8 +73,21 @@ export default class FluidSimulator {
 
     constructor(gl: WebGLRenderingContext, gui: GUI) {
         this.gl = gl;
+
+        // setup controls
+        gui.add({ PAUSE: this.toggleRunning.bind(this) }, 'PAUSE');
         gui.add({ RESTART: this.reset.bind(this) }, 'RESTART');
         this.config = new FluidConfig(gui);
+
+        document.addEventListener('keydown', (e: KeyboardEvent) => {
+            console.log('Key Pressed:', e.key);
+            if (['p', ' '].includes(e.key)) {
+                this.toggleRunning();
+            } else if (e.key === 'r') {
+                this.reset();
+            }
+        });
+
         this.quadBufferInfo = twgl.createBufferInfoFromArrays(gl, {
             position: {
                 data: [-1, -1, -1, 1, 1, -1, 1, 1],
@@ -112,12 +125,10 @@ export default class FluidSimulator {
 
         this.simRes = getResolution(gl, this.config.simResolution);
         this.dyeRes = getResolution(gl, this.config.dyeResolution);
+    }
 
-        gl.canvas.addEventListener('keydown', (e: KeyboardEvent) => {
-            if (e.code === 'KeyP') {
-                this.running = false;
-            }
-        });
+    toggleRunning() {
+        this.running = !this.running;
     }
 
     /**
@@ -529,8 +540,8 @@ export default class FluidSimulator {
      */
     update() {
         this.updateTime();
-        this.applyInputs();
         if (this.running) {
+            this.applyInputs();
             this.runSimulation();
             this.ran++;
 

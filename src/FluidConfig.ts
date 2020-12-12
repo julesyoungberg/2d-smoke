@@ -73,6 +73,10 @@ export default class FluidConfig {
         controls.add(this, 'splatForce', 0, 10000);
     }
 
+    reset() {
+        this.colorOffset = Math.random();
+    }
+
     getCurrentColor() {
         const n = (noise(this.noiseX, 0) + 1) * 0.5;
         this.noiseX += this.colorRate / 40000;
