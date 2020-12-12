@@ -20,13 +20,13 @@ export default class FluidConfig {
     color = [100, 100, 100];
     densityDissipation = 0.01;
     gravity = 5;
-    pressure = 0.1;
+    pressure = 0.8;
     // rest temperature of the fluid
     // 10 for smok
     // 15 for clouds
     restTemp = 10;
     temperatureDissipation = 0.01;
-    velocityDissipation = 0.0;
+    velocityDissipation = 0.02;
     viscosity = 0.101;
     vorticity = 40;
 
@@ -40,10 +40,7 @@ export default class FluidConfig {
     noiseX = 0.0;
 
     constructor(gui: GUI) {
-        this.colorOffset = Math.random();
-
-        // main controls
-        gui.add(this, 'vorticity', 0, 100);
+        this.colorOffset = Math.random();        
 
         const color = gui.addFolder('color');
         color.open();
@@ -56,17 +53,21 @@ export default class FluidConfig {
         color.add(this, 'colorRate', 0, 10);
         color.addColor(this, 'color');
 
-        const fluid = gui.addFolder('fluid properties');
-        fluid.add(this, 'densityDissipation', 0, 0.5);
-        fluid.add(this, 'velocityDissipation', 0, 0.5);
-        fluid.add(this, 'temperatureDissipation', 0, 0.5);
-        fluid.add(this, 'buoyancy', 0, 2);
-        // .add(this, 'buoyancyKappa', 0, 1);
-        // .add(this, 'buoyancySigma', 0, 1);
+        const fluid = gui.addFolder('fluid');
+        fluid.open();
+        fluid.add(this, 'buoyancy', 0, 1);
         fluid.add(this, 'gravity', 0, 30);
-        fluid.add(this, 'pressure', 0, 1);
-        fluid.add(this, 'restTemp', 0, 30);
-        fluid.add(this, 'viscosity', 0, 500);
+        fluid.add(this, 'vorticity', 0, 100);
+        fluid.add(this, 'densityDissipation', 0, 0.5);
+        fluid.add(this, 'temperatureDissipation', 0, 0.5);
+
+        const advanced = fluid.addFolder('advanced');
+        advanced.add(this, 'velocityDissipation', 0, 0.5);
+        advanced.add(this, 'buoyancyKappa', 0, 1);
+        advanced.add(this, 'buoyancySigma', 0, 1);
+        advanced.add(this, 'pressure', 0, 1);
+        advanced.add(this, 'restTemp', 0, 30);
+        advanced.add(this, 'viscosity', 0, 500);
 
         const controls = gui.addFolder('simulation');
         controls.add(this, 'splatRadius', 0, 0.5);
