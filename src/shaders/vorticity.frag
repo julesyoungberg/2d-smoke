@@ -7,7 +7,7 @@ out vec4 fragColor;
 uniform vec2 texelSize;
 uniform sampler2D curlField;
 uniform sampler2D velocityField;
-uniform float curl;
+uniform float vorticityConst;
 uniform float dt;
 
 void main() {
@@ -19,7 +19,7 @@ void main() {
 
     vec2 force = 0.5 * vec2(abs(T) - abs(B), abs(R) - abs(L));
     force /= length(force) + 0.0001;
-    force *= curl * C;
+    force *= vorticityConst * C;
     force.y *= -1.0;
 
     vec2 velocity = texture(velocityField, uv).xy;

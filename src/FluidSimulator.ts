@@ -1,6 +1,8 @@
+import { GUI } from 'dat.gui';
 import seedrandom from 'seedrandom';
 import * as twgl from 'twgl.js';
 
+import FluidConfig from './FluidConfig';
 import Pointer from './Pointer';
 import Pointers from './Pointers';
 import { swap } from './util';
@@ -23,27 +25,13 @@ const subtractShader = require('./shaders/subtract.frag');
 const textureShader = require('./shaders/texture.frag');
 const vorticityShader = require('./shaders/vorticity.frag');
 
-const config = {
-    SIM_RESOLUTION: 128,
-    DYE_RESOLUTION: 512,
-    CAPTURE_RESOLUTION: 512,
-    DENSITY_DISSIPATION: 0.2,
-    VELOCITY_DISSIPATION: 0.05,
-    PRESSURE: 0.8,
-    PRESSURE_ITERATIONS: 50,
-    CURL: 30,
-    REST_TEMP: 0,
-    SPLAT_RADIUS: 0.1,
-    SPLAT_FORCE: 6000,
-    VISCOSITY: 0.101,
-};
-
 /**
  * FluidSimulator class
  * Simulates fluids in 2D using a Eulerian approach on the GPU
  */
 export default class FluidSimulator {
     gl: WebGLRenderingContext;
+    config: FluidConfig;
     simulationFramebuffer: WebGLFramebuffer;
     // buffers
     quadBufferInfo: twgl.BufferInfo;
@@ -83,8 +71,9 @@ export default class FluidSimulator {
     runN = 0;
     ran = 0;
 
-    constructor(gl: WebGLRenderingContext) {
+    constructor(gl: WebGLRenderingContext, gui: GUI) {
         this.gl = gl;
+        this.config = new FluidConfig(gui);
         this.quadBufferInfo = twgl.createBufferInfoFromArrays(gl, {
             position: {
                 data: [-1, -1, -1, 1, 1, -1, 1, 1],
@@ -120,8 +109,8 @@ export default class FluidSimulator {
 
         this.swap = swap.bind(this);
 
-        this.simRes = getResolution(gl, config.SIM_RESOLUTION);
-        this.dyeRes = getResolution(gl, config.DYE_RESOLUTION);
+        this.simRes = getResolution(gl, this.config.simResolution);
+        this.dyeRes = getResolution(gl, this.config.dyeResolution);
 
         gl.canvas.addEventListener('keydown', (e: KeyboardEvent) => {
             if (e.code === 'KeyP') {
@@ -239,7 +228,7 @@ export default class FluidSimulator {
         this.advect(
             this.velocityTexture,
             Array.from(this.simTexelSize).slice(0, 2),
-            config.VELOCITY_DISSIPATION
+            this.config.velocityDissipation
         );
         this.swap('velocityTexture', 'simTexture');
     }
@@ -249,7 +238,7 @@ export default class FluidSimulator {
         this.advect(
             this.temperatureTexture,
             Array.from(this.simTexelSize).slice(0, 2),
-            config.VELOCITY_DISSIPATION
+            this.config.temperatureDissipation
         );
         this.swap('temperatureTexture', 'simTexture');
     }
@@ -259,7 +248,7 @@ export default class FluidSimulator {
         this.advect(
             this.dyeTexture,
             Array.from(this.dyeTexelSize).slice(0, 2),
-            config.DENSITY_DISSIPATION
+            this.config.densityDissipation
         );
         this.swap('dyeTexture', 'dyeTempTexture');
     }
@@ -283,7 +272,7 @@ export default class FluidSimulator {
     diffuseVelocity() {
         this.bindSimFramebuffer();
 
-        const ndt = config.VISCOSITY * this.dt();
+        const ndt = this.config.viscosity * this.dt();
         const alpha = this.simRes[0] ** 2 / ndt;
         const rBeta = 1 / (4 + this.simRes[0] ** 2 / ndt);
 
@@ -312,7 +301,7 @@ export default class FluidSimulator {
             densityTexture: this.dyeTexture,
             gravity: 0, // 100,
             buoyancy: 2,
-            restTemp: config.REST_TEMP,
+            restTemp: this.config.restTemp,
             k: 0.5,
         });
 
@@ -332,7 +321,7 @@ export default class FluidSimulator {
             texelSize: this.simTexelSize.slice(0, 2),
             curlField: this.curlTexture,
             velocityField: this.velocityTexture,
-            curl: config.CURL,
+            vorticityConst: this.config.vorticity,
             dt: this.dt(),
         });
         this.swap('velocityTexture', 'simTexture');
@@ -355,7 +344,7 @@ export default class FluidSimulator {
     clearPressureField() {
         this.runSimProg(this.clearProgInfo, {
             tex: this.pressureTexture,
-            value: config.PRESSURE,
+            value: this.config.pressure,
         });
         this.swap('pressureTexture', 'simTexture');
     }
@@ -428,7 +417,7 @@ export default class FluidSimulator {
         const common = {
             aspectRatio: this.gl.canvas.width / this.gl.canvas.height,
             point: [x, y],
-            radius: this.scaleRadius(config.SPLAT_RADIUS / 100.0),
+            radius: this.scaleRadius(this.config.splatRadius / 100.0),
         };
 
         // splat to velocity texture
@@ -472,8 +461,8 @@ export default class FluidSimulator {
     }
 
     splatPointer(p: Pointer) {
-        const dx = p.deltaX * config.SPLAT_FORCE;
-        const dy = p.deltaY * config.SPLAT_FORCE;
+        const dx = p.deltaX * this.config.splatForce;
+        const dy = p.deltaY * this.config.splatForce;
         this.splat(p.x, p.y, dx, dy, p.color);
     }
 
@@ -491,7 +480,7 @@ export default class FluidSimulator {
         });
 
         // apply constant input
-        this.splat(0.5, 0, 0, 1, { r: 0.1, g: 0.1, b: 0.1 });
+        this.splat(0.5, 0, 0, 1, { r: 0.01, g: 0.01, b: 0.01 });
     }
 
     /**

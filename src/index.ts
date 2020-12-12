@@ -1,11 +1,13 @@
+import * as dat from 'dat.gui';
 import * as twgl from 'twgl.js';
 
 import createContext from './util/createContext';
 import FluidSimulator from './FluidSimulator';
 
 const gl = createContext();
+const gui = new dat.GUI();
 
-const fluidSimulator = new FluidSimulator(gl);
+const fluidSimulator = new FluidSimulator(gl, gui);
 fluidSimulator.setup();
 
 function render() {
