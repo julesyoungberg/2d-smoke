@@ -510,8 +510,8 @@ export default class FluidSimulator {
         this.diffuseVelocity();
         this.addForces();
 
-        // this.computeCurl();
-        // this.enforceVorticity();
+        this.computeCurl();
+        this.enforceVorticity();
 
         this.enforceVelocityBoundaries();
 

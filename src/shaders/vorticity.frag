@@ -40,7 +40,7 @@ void main() {
     force *= curl * C;
     force.y *= -1.0;
 
-    vec2 velocity = texture(velocityField, uv).xy;
+    vec2 velocity = getVelocity(uv).xy;
     velocity += force * dt;
     velocity = min(max(velocity, -1000.0), 1000.0);
     fragColor = vec4(velocity, 0, 1);
