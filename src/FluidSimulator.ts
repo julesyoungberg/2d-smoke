@@ -20,7 +20,6 @@ const clearShader = require('./shaders/clear.frag');
 const curlShader = require('./shaders/curl.frag');
 const divergenceShader = require('./shaders/divergence.frag');
 const dptShader = require('./shaders/dpt.frag');
-const fluidShader = require('./shaders/fluid.frag');
 const jacobiShader = require('./shaders/jacobi.frag');
 const splatShader = require('./shaders/splat.frag');
 const subtractShader = require('./shaders/subtract.frag');
@@ -56,7 +55,6 @@ export default class FluidSimulator {
     divergenceProgInfo: twgl.ProgramInfo;
     jacobiProgInfo: twgl.ProgramInfo;
     renderDptProgInfo: twgl.ProgramInfo;
-    renderFluidProgInfo: twgl.ProgramInfo;
     renderTextureProgInfo: twgl.ProgramInfo;
     splatProgInfo: twgl.ProgramInfo;
     subtractProgInfo: twgl.ProgramInfo;
@@ -117,7 +115,6 @@ export default class FluidSimulator {
         this.divergenceProgInfo = twgl.createProgramInfo(gl, [basicVertShader, divergenceShader]);
         this.jacobiProgInfo = twgl.createProgramInfo(gl, [basicVertShader, jacobiShader]);
         this.renderDptProgInfo = twgl.createProgramInfo(gl, [basicVertShader, dptShader]);
-        this.renderFluidProgInfo = twgl.createProgramInfo(gl, [basicVertShader, fluidShader]);
         this.renderTextureProgInfo = twgl.createProgramInfo(gl, [basicVertShader, textureShader]);
         this.splatProgInfo = twgl.createProgramInfo(gl, [basicVertShader, splatShader]);
         this.subtractProgInfo = twgl.createProgramInfo(gl, [basicVertShader, subtractShader]);
@@ -577,15 +574,6 @@ export default class FluidSimulator {
         });
     }
 
-    drawFluid() {
-        this.runProg(this.renderFluidProgInfo, {
-            dye: this.dyeTexture,
-            pressure: this.pressureTexture,
-            temperature: this.temperatureTexture,
-            velocity: this.velocityTexture,
-        });
-    }
-
     drawTexture(tex: WebGLTexture) {
         this.runProg(this.renderTextureProgInfo, { tex });
     }
@@ -604,9 +592,6 @@ export default class FluidSimulator {
                 break;
             case 'velocity':
                 this.drawTexture(this.velocityTexture);
-                break;
-            case 'fluid':
-                this.drawFluid();
                 break;
             default:
                 this.drawTexture(this.dyeTexture);

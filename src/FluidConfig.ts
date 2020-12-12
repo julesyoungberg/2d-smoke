@@ -7,7 +7,7 @@ const noise = makeNoise2D(Date.now());
 
 type ColorMode = 'rainbow' | 'static';
 type PointerMode = 'hand' | 'flame';
-type RenderMode = 'color' | 'dpt' | 'fluid' | 'velocity';
+type RenderMode = 'color' | 'dpt' | 'velocity';
 
 export default class FluidConfig {
     // texture resolutions
@@ -39,14 +39,14 @@ export default class FluidConfig {
     noiseX = 0.0;
     pointerMode: PointerMode = 'hand';
     pressureIterations = 50;
-    renderMode: RenderMode = 'fluid';
+    renderMode: RenderMode = 'color';
     splatRadius = 0.1;
     splatForce = 6000;
 
     constructor(gui: GUI) {
         this.colorOffset = Math.random();
 
-        gui.add(this, 'renderMode', ['color', 'fluid', 'velocity', 'dpt']);
+        // gui.add(this, 'renderMode', ['color', 'velocity', 'dpt']);
         gui.add(this, 'pointerMode', ['hand', 'flame']);
 
         const color = gui.addFolder('color');
