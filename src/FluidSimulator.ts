@@ -10,6 +10,7 @@ import bindFramebuffer, { bindFramebufferWithTexture } from './util/bindFramebuf
 import buildTexture from './util/buildTexture';
 import { randomColor } from './util/color';
 import getResolution from './util/getResolution';
+import { containImage, fileObjToData } from './util/image';
 
 const advectShader = require('./shaders/advect.frag');
 const addForcesShader = require('./shaders/addForces.frag');
@@ -79,6 +80,7 @@ export default class FluidSimulator {
         // setup controls
         gui.add({ PAUSE: this.toggleRunning.bind(this) }, 'PAUSE');
         gui.add({ RESTART: this.reset.bind(this) }, 'RESTART');
+        gui.add({ FROM_IMAGE: this.fromImage.bind(this) }, 'FROM_IMAGE');
         this.config = new FluidConfig(gui);
 
         document.addEventListener('keydown', (e: KeyboardEvent) => {
@@ -132,6 +134,27 @@ export default class FluidSimulator {
 
     toggleRunning() {
         this.running = !this.running;
+    }
+
+    async handleImageUploaded(e: InputEvent) {
+        const input = e.target as HTMLInputElement;
+        if (input.files.length === 0) {
+            return;
+        }
+
+        const srcData = await fileObjToData(input.files[0]);
+        const resized = await containImage(srcData, this.gl.canvas.width, this.gl.canvas.height);
+        const texture = twgl.createTexture(this.gl, { src: resized });
+        
+        this.setup();
+        // draw texture to dye, velocity, and temperature
+        // maybe with util/drawImage?
+    }
+
+    fromImage() {
+        const input = document.getElementById('image-upload');
+        input.addEventListener('change', this.handleImageUploaded.bind(this), { once: true });
+        input.click();
     }
 
     /**
