@@ -430,7 +430,7 @@ export default class FluidSimulator {
         return r;
     }
 
-    splat(x: number, y: number, dx: number, dy: number, color: number[]) {
+    splat(x: number, y: number, dx: number, dy: number, color: number[], velOnly?: boolean) {
         const common = {
             aspectRatio: this.gl.canvas.width / this.gl.canvas.height,
             point: [x, y],
@@ -440,10 +440,14 @@ export default class FluidSimulator {
         // splat to velocity texture
         this.runSimProg(this.splatProgInfo, {
             ...common,
-            color: [dx, dy, 0],
+            color: [dx / 2, dy / 2, 0],
             tex: this.velocityTexture,
         });
         this.swap('velocityTexture', 'simTexture');
+
+        if (velOnly) {
+            return;
+        }
 
         // splat to temperature texture
         this.runSimProg(this.splatProgInfo, {
@@ -477,7 +481,7 @@ export default class FluidSimulator {
     splatPointer(p: Pointer) {
         const dx = p.deltaX * this.config.splatForce;
         const dy = p.deltaY * this.config.splatForce;
-        this.splat(p.x, p.y, dx, dy, p.color);
+        this.splat(p.x, p.y, dx, dy, p.color, true);
     }
 
     applyInputs() {
