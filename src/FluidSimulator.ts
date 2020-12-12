@@ -8,7 +8,7 @@ import Pointers from './Pointers';
 import { swap } from './util';
 import bindFramebuffer, { bindFramebufferWithTexture } from './util/bindFramebuffer';
 import buildTexture from './util/buildTexture';
-import { Color, randomColor } from './util/color';
+import { randomColor } from './util/color';
 import getResolution from './util/getResolution';
 
 const advectShader = require('./shaders/advect.frag');
@@ -413,7 +413,7 @@ export default class FluidSimulator {
         return r;
     }
 
-    splat(x: number, y: number, dx: number, dy: number, color: Color) {
+    splat(x: number, y: number, dx: number, dy: number, color: number[]) {
         const common = {
             aspectRatio: this.gl.canvas.width / this.gl.canvas.height,
             point: [x, y],
@@ -440,7 +440,7 @@ export default class FluidSimulator {
         this.bindDyeFramebuffer();
         this.runProg(this.splatProgInfo, {
             ...common,
-            color: [color.r, color.g, color.b],
+            color,
             tex: this.dyeTexture,
         });
         this.swap('dyeTexture', 'dyeTempTexture');
@@ -448,10 +448,7 @@ export default class FluidSimulator {
 
     multipleSplats(nSplats: number, rng: () => number) {
         for (let i = 0; i < nSplats; i++) {
-            const color = randomColor();
-            color.r *= 10.0;
-            color.g *= 10.0;
-            color.b *= 10.0;
+            const color = randomColor().map(c => c * 10.0);
             const x = rng();
             const y = rng();
             const dx = 1000 * (rng() - 0.5);
@@ -480,7 +477,7 @@ export default class FluidSimulator {
         });
 
         // apply constant input
-        this.splat(0.5, 0, 0, 1, { r: 0.005, g: 0.005, b: 0.005 });
+        this.splat(0.5, 0, 0, 1, this.config.getColor());
     }
 
     /**

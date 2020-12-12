@@ -7,6 +7,7 @@ export default class FluidConfig {
     dyeResolution = 512;
     coputeResolution = 512;
     // fluid properties
+    color = [100, 100, 100];
     densityDissipation = 0.05;
     pressure = 0.8;
     restTemp = 0;
@@ -22,6 +23,8 @@ export default class FluidConfig {
     constructor(gui: GUI) {
         this.gui = gui;
 
+        gui.addColor(this, 'color');
+
         gui.add(this, 'densityDissipation', 0, 1);
         gui.add(this, 'velocityDissipation', 0, 1);
         gui.add(this, 'temperatureDissipation', 0, 1);
@@ -33,5 +36,9 @@ export default class FluidConfig {
 
         gui.add(this, 'splatRadius', 0.001, 10);
         gui.add(this, 'splatForce', 0, 10000);
+    }
+
+    getColor() {
+        return this.color.map(c => c / (255 * 50));
     }
 }

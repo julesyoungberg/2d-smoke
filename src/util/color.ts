@@ -1,10 +1,4 @@
-export interface Color {
-    r: number;
-    g: number;
-    b: number;
-}
-
-export function hsvToRgb(h: number, s: number, v: number): Color {
+export function hsvToRgb(h: number, s: number, v: number) {
     let r: number;
     let g: number;
     let b: number;
@@ -36,17 +30,17 @@ export function hsvToRgb(h: number, s: number, v: number): Color {
             break;
     }
 
-    return {
+    return [
         r,
         g,
         b,
-    };
+    ];
 }
 
 export function randomColor() {
     const c = hsvToRgb(Math.random(), 1.0, 1.0);
-    c.r *= 0.15;
-    c.g *= 0.15;
-    c.b *= 0.15;
+    c[0] *= 0.15;
+    c[1] *= 0.15;
+    c[2] *= 0.15;
     return c;
 }
