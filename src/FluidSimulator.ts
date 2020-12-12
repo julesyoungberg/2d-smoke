@@ -33,7 +33,7 @@ const config = {
     PRESSURE_ITERATIONS: 50,
     CURL: 30,
     REST_TEMP: 0,
-    SPLAT_RADIUS: 2.0,
+    SPLAT_RADIUS: 0.1,
     SPLAT_FORCE: 6000,
     VISCOSITY: 0.101,
 };
@@ -171,8 +171,9 @@ export default class FluidSimulator {
         this.prevTime = Date.now();
         this.buildTextures();
         
-        const rng = seedrandom(Math.random());
-        this.multipleSplats(rng() * 5 + 10, rng);
+        // random initialization
+        // const rng = seedrandom(Math.random());
+        // this.multipleSplats(rng() * 5 + 10, rng);
 
         this.simTexelSize = twgl.v3.create(1 / this.simRes[0], 1 / this.simRes[1]);
         this.dyeTexelSize = twgl.v3.create(1 / this.dyeRes[0], 1 / this.dyeRes[1]);
@@ -488,6 +489,9 @@ export default class FluidSimulator {
                 this.splatPointer(p);
             }
         });
+
+        // apply constant input
+        this.splat(0.5, 0, 0, 1, { r: 0.1, g: 0.1, b: 0.1 });
     }
 
     /**
