@@ -7,13 +7,13 @@ export default class FluidConfig {
     dyeResolution = 512;
     coputeResolution = 512;
     // fluid properties
-    densityDissipation = 0.001;
+    densityDissipation = 0.05;
     pressure = 0.8;
     restTemp = 0;
     temperatureDissipation = 0.05;
     velocityDissipation = 0.05;
     viscosity = 0.101;
-    vorticity = 50;
+    vorticity = 40;
     // sim config
     pressureIterations = 50;
     splatRadius = 0.1;

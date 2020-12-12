@@ -480,7 +480,7 @@ export default class FluidSimulator {
         });
 
         // apply constant input
-        this.splat(0.5, 0, 0, 1, { r: 0.01, g: 0.01, b: 0.01 });
+        this.splat(0.5, 0, 0, 1, { r: 0.005, g: 0.005, b: 0.005 });
     }
 
     /**
