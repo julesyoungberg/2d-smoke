@@ -299,10 +299,11 @@ export default class FluidSimulator {
             velocityTexture: this.velocityTexture,
             temperatureTexture: this.temperatureTexture,
             densityTexture: this.dyeTexture,
-            gravity: 0, // 100,
-            buoyancy: 2,
+            gravity: this.config.gravity,
+            buoyancy: this.config.buoyancy,
             restTemp: this.config.restTemp,
-            k: 0.5,
+            kappa: this.config.buoyancyKappa,
+            sigma: this.config.buoyancySigma,
         });
 
         this.swap('velocityTexture', 'simTexture');
@@ -431,7 +432,7 @@ export default class FluidSimulator {
         // splat to temperature texture
         this.runSimProg(this.splatProgInfo, {
             ...common,
-            color: [Math.sqrt(dx * dx + dy * dy), 0, 0],
+            color: [Math.random() * 10 + 5, 0, 0],
             tex: this.temperatureTexture,
         });
         this.swap('temperatureTexture', 'simTexture');
