@@ -3,11 +3,11 @@ export function hsvToRgb(h: number, s: number, v: number) {
     let g: number;
     let b: number;
 
-    let i = Math.floor(h * 6);
-    let f = h * 6 - i;
-    let p = v * (1 - s);
-    let q = v * (1 - f * s);
-    let t = v * (1 - (1 - f) * s);
+    const i = Math.floor(h * 6);
+    const f = h * 6 - i;
+    const p = v * (1 - s);
+    const q = v * (1 - f * s);
+    const t = v * (1 - (1 - f) * s);
 
     switch (i % 6) {
         case 0:
@@ -30,11 +30,7 @@ export function hsvToRgb(h: number, s: number, v: number) {
             break;
     }
 
-    return [
-        r,
-        g,
-        b,
-    ];
+    return [r, g, b];
 }
 
 export function randomColor() {

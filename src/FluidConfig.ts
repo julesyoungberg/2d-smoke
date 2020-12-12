@@ -49,7 +49,7 @@ export default class FluidConfig {
         color.open();
         color.add(this, 'colorMode', ['rainbow', 'static']).onChange((val) => {
             if (val === 'static') {
-                this.color = this.getCurrentColor().map(c => c * 255 * 50);
+                this.color = this.getCurrentColor().map((c) => c * 255 * 50);
             }
             gui.updateDisplay();
         });
@@ -80,15 +80,15 @@ export default class FluidConfig {
     getCurrentColor() {
         const n = (noise(this.noiseX, 0) + 1) * 0.5;
         this.noiseX += this.colorRate / 40000;
-        return hsvToRgb((n + this.colorOffset) % 1, 0.8, 0.5).map(c => c / 40);
+        return hsvToRgb((n + this.colorOffset) % 1, 0.8, 0.5).map((c) => c / 40);
     }
 
     getColor() {
-        switch(this.colorMode) {
+        switch (this.colorMode) {
             case 'rainbow':
                 return this.getCurrentColor();
             default:
-                return this.color.map(c => c / (255 * 50));
+                return this.color.map((c) => c / (255 * 50));
         }
     }
 }

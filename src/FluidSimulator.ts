@@ -158,7 +158,7 @@ export default class FluidSimulator {
         buildTexture(this.gl, this.simTexture, { ...simDimensions, src: null });
         buildTexture(this.gl, this.temperatureTexture, opt);
         buildTexture(this.gl, this.velocityTexture, opt);
-    
+
         const dyeDimensions = { width: dyeRes[0], height: dyeRes[1] };
         buildTexture(this.gl, this.dyeTexture, {
             ...dyeDimensions,
@@ -171,7 +171,7 @@ export default class FluidSimulator {
         this.ran = 0;
         this.prevTime = Date.now();
         this.buildTextures();
-        
+
         // random initialization
         // const rng = seedrandom(Math.random());
         // this.multipleSplats(rng() * 5 + 10, rng);
@@ -465,7 +465,7 @@ export default class FluidSimulator {
 
     multipleSplats(nSplats: number, rng: () => number) {
         for (let i = 0; i < nSplats; i++) {
-            const color = randomColor().map(c => c * 10.0);
+            const color = randomColor().map((c) => c * 10.0);
             const x = rng();
             const y = rng();
             const dx = 1000 * (rng() - 0.5);
@@ -486,9 +486,9 @@ export default class FluidSimulator {
             this.multipleSplats(this.splatStack.pop(), rng);
         }
 
-        this.pointers.pointers.forEach((p) => {
+        this.pointers.pointers.forEach((p, i) => {
             if (p.moved) {
-                p.moved = false;
+                this.pointers.pointers[i].moved = false;
                 this.splatPointer(p);
             }
         });
@@ -513,9 +513,9 @@ export default class FluidSimulator {
         }
 
         this.enforceVelocityBoundaries();
-    
+
         this.computeDivergence();
-    
+
         this.clearPressureField();
         this.computePressureField();
 
