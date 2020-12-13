@@ -35,8 +35,6 @@ const vorticityShader = require('./shaders/vorticity.frag');
  */
 export default class FluidSimulator {
     gl: WebGLRenderingContext;
-    config: FluidConfig;
-    imageSource: ImageSource;
     simulationFramebuffer: WebGLFramebuffer;
     // buffers
     quadBufferInfo: twgl.BufferInfo;
@@ -63,19 +61,24 @@ export default class FluidSimulator {
     splatProgInfo: twgl.ProgramInfo;
     subtractProgInfo: twgl.ProgramInfo;
     vorticityProgInfo: twgl.ProgramInfo;
+    // interaction
+    pointers: Pointers;
+    splatStack: number[] = [];
+    // simulation config
+    dyeRes: number[];
+    dyeTexelSize: number[];
+    simRes: number[];
+    simTexelSize: number[];
     // simulation state
+    config: FluidConfig;
+    imageSource: ImageSource;
     prevTime = 0;
     timeStep = 0;
-    pointers: Pointers;
-    swap: (a: string, b: string) => void;
-    simRes: twgl.v3.Vec3;
-    simTexelSize: twgl.v3.Vec3;
-    dyeRes: twgl.v3.Vec3;
-    dyeTexelSize: twgl.v3.Vec3;
-    splatStack: number[] = [];
     running = true;
     runN = 0;
     ran = 0;
+
+    swap: (a: string, b: string) => void;
 
     constructor(gl: WebGLRenderingContext, gui: GUI) {
         this.gl = gl;
@@ -181,8 +184,8 @@ export default class FluidSimulator {
         // this.multipleSplats(rng() * 5 + 10, rng);
 
         this.imageSource.setup(this.dyeRes);
-        this.simTexelSize = twgl.v3.create(1 / this.simRes[0], 1 / this.simRes[1]);
-        this.dyeTexelSize = twgl.v3.create(1 / this.dyeRes[0], 1 / this.dyeRes[1]);
+        this.simTexelSize = [1 / this.simRes[0], 1 / this.simRes[1]];
+        this.dyeTexelSize = [1 / this.dyeRes[0], 1 / this.dyeRes[1]];
 
         this.update();
     }
