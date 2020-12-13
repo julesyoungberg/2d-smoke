@@ -8,6 +8,7 @@ const noise = makeNoise2D(Date.now());
 type ColorMode = 'rainbow' | 'static';
 type PointerMode = 'hand' | 'flame';
 type RenderMode = 'color' | 'dpt' | 'velocity';
+type SimMode = 'candel' | 'image';
 
 export default class FluidConfig {
     // texture resolutions
@@ -20,7 +21,7 @@ export default class FluidConfig {
     buoyancyKappa = 0.25;
     buoyancySigma = 0.1;
     color = [100, 100, 100];
-    densityDissipation = 0.05;
+    densityDissipation = 0.1;
     gravity = 5;
     pressure = 0.8;
     // rest temperature of the fluid
@@ -28,7 +29,7 @@ export default class FluidConfig {
     // 15 for clouds
     restTemp = 10;
     temperatureDissipation = 0.05;
-    velocityDissipation = 0.05;
+    velocityDissipation = 0.01;
     viscosity = 0.101;
     vorticity = 40;
 
@@ -40,7 +41,8 @@ export default class FluidConfig {
     pointerMode: PointerMode = 'flame';
     pressureIterations = 50;
     renderMode: RenderMode = 'color';
-    splatRadius = 0.15;
+    simMode: SimMode = 'candel';
+    splatRadius = 0.2;
     splatForce = 6000;
 
     constructor(gui: GUI) {
@@ -67,14 +69,14 @@ export default class FluidConfig {
         fluid.add(this, 'vorticity', 0, 100);
         fluid.add(this, 'densityDissipation', 0, 0.5);
         fluid.add(this, 'temperatureDissipation', 0, 0.5);
+        fluid.add(this, 'velocityDissipation', 0, 0.5);
 
-        const advanced = fluid.addFolder('advanced');
-        advanced.add(this, 'velocityDissipation', 0, 0.5);
-        advanced.add(this, 'buoyancyKappa', 0, 1);
-        advanced.add(this, 'buoyancySigma', 0, 1);
-        advanced.add(this, 'pressure', 0, 1);
-        advanced.add(this, 'restTemp', 0, 30);
-        advanced.add(this, 'viscosity', 0, 500);
+        // const advanced = fluid.addFolder('advanced');
+        // advanced.add(this, 'buoyancyKappa', 0, 1);
+        // advanced.add(this, 'buoyancySigma', 0, 1);
+        // advanced.add(this, 'pressure', 0, 1);
+        // advanced.add(this, 'restTemp', 0, 30);
+        // advanced.add(this, 'viscosity', 0, 500);
 
         const controls = gui.addFolder('simulation');
         controls.add(this, 'splatRadius', 0, 0.5);

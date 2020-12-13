@@ -503,7 +503,9 @@ export default class FluidSimulator {
         });
 
         // apply constant input
-        this.splat(0.5, 0, 0, 2, this.config.getColor());
+        if (this.config.simMode === 'candel') {
+            this.splat(0.5, 0, 0, 2, this.config.getColor());
+        }
     }
 
     /**
@@ -600,13 +602,16 @@ export default class FluidSimulator {
         }
     }
 
+    // TODO
+    // - fix weird stretching in draw image
+    // - improve velocity and temperature
+    // - set special settings for the image mode
     handleImageSource(imageTexture: WebGLTexture, width: number, height: number) {
         console.log('received image source with dimensions:', width, height);
-        this.setup();
-        this.running = false;
 
-        // draw texture to dye, velocity, and temperature
-        // maybe with util/drawImage?
+        this.config.simMode = 'image';
+        this.setup();
+
         this.bindDyeFramebuffer();
         drawImage(this.gl, {
             image: imageTexture,
@@ -619,5 +624,31 @@ export default class FluidSimulator {
             quadBufferInfo: this.quadBufferInfo,
         });
         this.swap('dyeTexture', 'dyeTempTexture');
+
+        this.bindSimFramebuffer();
+        drawImage(this.gl, {
+            image: imageTexture,
+            x: this.simRes[0] / 2,
+            y: this.simRes[1] / 2,
+            width,
+            height,
+            destWidth: this.simRes[0],
+            destHeight: this.simRes[1],
+            quadBufferInfo: this.quadBufferInfo,
+        });
+        this.swap('velocityTexture', 'simTexture');
+        
+        this.bindSimFramebuffer();
+        drawImage(this.gl, {
+            image: imageTexture,
+            x: this.simRes[0] / 2,
+            y: this.simRes[1] / 2,
+            width,
+            height,
+            destWidth: this.simRes[0],
+            destHeight: this.simRes[1],
+            quadBufferInfo: this.quadBufferInfo,
+        });
+        this.swap('temperatureTexture', 'simTexture'); 
     }
 }
