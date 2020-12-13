@@ -7,7 +7,7 @@ export default function createModuleProg(shaders: string[]) {
         if (!programInfo) {
             programInfo = twgl.createProgramInfo(gl, shaders);
         }
-        
+
         return programInfo;
     };
 }

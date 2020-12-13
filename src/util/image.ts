@@ -1,5 +1,5 @@
 export function fileObjToData(file: File): Promise<string> {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
         const reader = new FileReader();
         reader.onload = (e: ProgressEvent<FileReader>) => resolve(e.target.result as string);
         reader.readAsDataURL(file);
@@ -19,14 +19,16 @@ export async function containImage(srcData: string, width: number, height: numbe
     const img = document.createElement('img');
 
     img.src = srcData;
-    await new Promise(resolve => { img.onload = resolve; });
+    await new Promise((resolve) => {
+        img.onload = resolve;
+    });
 
     console.log('src dimensions: ', img.width, img.height);
     canvas.width = img.width;
     canvas.height = img.height;
     canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
 
-    while (canvas.width  >= 2 * width) {
+    while (canvas.width >= 2 * width) {
         canvas = scaleCanvas(canvas, 0.5);
     }
 

@@ -3,6 +3,7 @@ import seedrandom from 'seedrandom';
 import * as twgl from 'twgl.js';
 
 import FluidConfig from './FluidConfig';
+import ImageSource from './ImageSource';
 import Pointer from './Pointer';
 import Pointers from './Pointers';
 import { swap } from './util';
@@ -36,6 +37,7 @@ const vorticityShader = require('./shaders/vorticity.frag');
 export default class FluidSimulator {
     gl: WebGLRenderingContext;
     config: FluidConfig;
+    imageSource: ImageSource;
     simulationFramebuffer: WebGLFramebuffer;
     // buffers
     quadBufferInfo: twgl.BufferInfo;
@@ -44,7 +46,6 @@ export default class FluidSimulator {
     divergenceTexture: WebGLTexture;
     dyeTexture: WebGLTexture;
     dyeTempTexture: WebGLTexture;
-    imageTexture: WebGLTexture;
     pressureTexture: WebGLTexture;
     simTexture: WebGLTexture;
     temperatureTexture: WebGLTexture;
@@ -76,15 +77,15 @@ export default class FluidSimulator {
     running = true;
     runN = 0;
     ran = 0;
-    imageCanvas: HTMLCanvasElement;
 
     constructor(gl: WebGLRenderingContext, gui: GUI) {
         this.gl = gl;
+        this.imageSource = new ImageSource(gl, this.handleImageSource.bind(this));
 
         // setup controls
         gui.add({ PAUSE: this.toggleRunning.bind(this) }, 'PAUSE');
         gui.add({ RESTART: this.reset.bind(this) }, 'RESTART');
-        gui.add({ FROM_IMAGE: this.fromImage.bind(this) }, 'FROM_IMAGE');
+        gui.add({ FROM_IMAGE: this.imageSource.uploadImage }, 'FROM_IMAGE');
         this.config = new FluidConfig(gui);
 
         document.addEventListener('keydown', (e: KeyboardEvent) => {
@@ -102,7 +103,6 @@ export default class FluidSimulator {
         this.divergenceTexture = gl.createTexture();
         this.dyeTexture = gl.createTexture();
         this.dyeTempTexture = gl.createTexture();
-        this.imageTexture = gl.createTexture();
         this.pressureTexture = gl.createTexture();
         this.simTexture = gl.createTexture();
         this.temperatureTexture = gl.createTexture();
@@ -134,43 +134,6 @@ export default class FluidSimulator {
 
     toggleRunning() {
         this.running = !this.running;
-    }
-
-    async handleImageUploaded(e: InputEvent) {
-        const input = e.target as HTMLInputElement;
-        if (input.files.length === 0) {
-            return;
-        }
-
-        const srcData = await fileObjToData(input.files[0]);
-        console.log('containing image within: ', this.dyeRes.map(c => c / 2));
-        this.imageCanvas = await containImage(srcData, this.dyeRes[0] / 2, this.dyeRes[1] / 2);
-        console.log('resulting dimensions: ', this.imageCanvas.width, this.imageCanvas.height);
-        this.imageTexture = twgl.createTexture(this.gl, { src: this.imageCanvas });
-        
-        this.setup();
-        this.running = false;
-
-        // draw texture to dye, velocity, and temperature
-        // maybe with util/drawImage?
-        this.bindDyeFramebuffer();
-        drawImage(this.gl, {
-            image: this.imageTexture,
-            x: this.dyeRes[0] / 2, 
-            y: this.dyeRes[1] / 2,
-            width: this.imageCanvas.width,
-            height: this.imageCanvas.height,
-            destWidth: this.dyeRes[0],
-            destHeight: this.dyeRes[1],
-            quadBufferInfo: this.quadBufferInfo,
-        });
-        this.swap('dyeTexture', 'dyeTempTexture');
-    }
-
-    fromImage() {
-        const input = document.getElementById('image-upload');
-        input.addEventListener('change', this.handleImageUploaded.bind(this), { once: true });
-        input.click();
     }
 
     /**
@@ -218,6 +181,7 @@ export default class FluidSimulator {
         // const rng = seedrandom(Math.random());
         // this.multipleSplats(rng() * 5 + 10, rng);
 
+        this.imageSource.setup(this.dyeRes);
         this.simTexelSize = twgl.v3.create(1 / this.simRes[0], 1 / this.simRes[1]);
         this.dyeTexelSize = twgl.v3.create(1 / this.dyeRes[0], 1 / this.dyeRes[1]);
 
@@ -635,5 +599,25 @@ export default class FluidSimulator {
             default:
                 this.drawTexture(this.dyeTexture);
         }
+    }
+
+    handleImageSource(imageTexture: WebGLTexture, width: number, height: number) {
+        this.setup();
+        this.running = false;
+
+        // draw texture to dye, velocity, and temperature
+        // maybe with util/drawImage?
+        this.bindDyeFramebuffer();
+        drawImage(this.gl, {
+            image: imageTexture,
+            x: this.dyeRes[0] / 2,
+            y: this.dyeRes[1] / 2,
+            width,
+            height,
+            destWidth: this.dyeRes[0],
+            destHeight: this.dyeRes[1],
+            quadBufferInfo: this.quadBufferInfo,
+        });
+        this.swap('dyeTexture', 'dyeTempTexture');
     }
 }

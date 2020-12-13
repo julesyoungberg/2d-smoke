@@ -1,6 +1,7 @@
 import * as twgl from 'twgl.js';
 
 import createModuleProg from './createModuleProg';
+import createUnitQuad2d from './createUnitQuad2D';
 
 const drawImageVert = `#version 300 es
 in vec4 position;
@@ -34,10 +35,9 @@ export interface drawImageOptions {
     height: number;
     destWidth: number;
     destHeight: number;
-    quadBufferInfo: twgl.BufferInfo;
+    quadBufferInfo?: twgl.BufferInfo;
 }
 
-// based on: https://webgl2fundamentals.org/webgl/lessons/webgl-2d-drawimage.html
 export default function drawImage(gl: WebGLRenderingContext, opt: drawImageOptions) {
     const programInfo = getProgramInfo(gl);
     gl.useProgram(programInfo.program);
@@ -47,7 +47,8 @@ export default function drawImage(gl: WebGLRenderingContext, opt: drawImageOptio
     matrix = twgl.m4.translate(matrix, twgl.v3.create(opt.x, opt.y, 0));
     matrix = twgl.m4.scale(matrix, twgl.v3.create(opt.width, opt.height, 1));
 
-    twgl.setBuffersAndAttributes(gl, programInfo, opt.quadBufferInfo);
+    const bufferInfo = opt.quadBufferInfo || createUnitQuad2d(gl);
+    twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo);
     twgl.setUniforms(programInfo, { image: opt.image, matrix });
-    twgl.drawBufferInfo(gl, opt.quadBufferInfo, gl.TRIANGLE_STRIP);
+    twgl.drawBufferInfo(gl, bufferInfo, gl.TRIANGLE_STRIP);
 }
