@@ -21,6 +21,7 @@ export async function containImage(srcData: string, width: number, height: numbe
     img.src = srcData;
     await new Promise(resolve => { img.onload = resolve; });
 
+    console.log('src dimensions: ', img.width, img.height);
     canvas.width = img.width;
     canvas.height = img.height;
     canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);

@@ -9,6 +9,7 @@ import { swap } from './util';
 import bindFramebuffer, { bindFramebufferWithTexture } from './util/bindFramebuffer';
 import buildTexture from './util/buildTexture';
 import { randomColor } from './util/color';
+import drawImage from './util/drawImage';
 import getResolution from './util/getResolution';
 import { containImage, fileObjToData } from './util/image';
 
@@ -42,6 +43,7 @@ export default class FluidSimulator {
     divergenceTexture: WebGLTexture;
     dyeTexture: WebGLTexture;
     dyeTempTexture: WebGLTexture;
+    imageTexture: WebGLTexture;
     pressureTexture: WebGLTexture;
     simTexture: WebGLTexture;
     temperatureTexture: WebGLTexture;
@@ -73,6 +75,7 @@ export default class FluidSimulator {
     running = true;
     runN = 0;
     ran = 0;
+    imageCanvas: HTMLCanvasElement;
 
     constructor(gl: WebGLRenderingContext, gui: GUI) {
         this.gl = gl;
@@ -103,6 +106,7 @@ export default class FluidSimulator {
         this.divergenceTexture = gl.createTexture();
         this.dyeTexture = gl.createTexture();
         this.dyeTempTexture = gl.createTexture();
+        this.imageTexture = gl.createTexture();
         this.pressureTexture = gl.createTexture();
         this.simTexture = gl.createTexture();
         this.temperatureTexture = gl.createTexture();
@@ -143,12 +147,28 @@ export default class FluidSimulator {
         }
 
         const srcData = await fileObjToData(input.files[0]);
-        const resized = await containImage(srcData, this.gl.canvas.width, this.gl.canvas.height);
-        const texture = twgl.createTexture(this.gl, { src: resized });
+        console.log('containing image within: ', this.dyeRes.map(c => c / 2));
+        this.imageCanvas = await containImage(srcData, this.dyeRes[0] / 2, this.dyeRes[1] / 2);
+        console.log('resulting dimensions: ', this.imageCanvas.width, this.imageCanvas.height);
+        this.imageTexture = twgl.createTexture(this.gl, { src: this.imageCanvas });
         
         this.setup();
+        this.running = false;
+
         // draw texture to dye, velocity, and temperature
         // maybe with util/drawImage?
+        this.bindDyeFramebuffer();
+        drawImage(this.gl, {
+            image: this.imageTexture,
+            x: this.dyeRes[0] / 2, 
+            y: this.dyeRes[1] / 2,
+            width: this.imageCanvas.width,
+            height: this.imageCanvas.height,
+            destWidth: this.dyeRes[0],
+            destHeight: this.dyeRes[1],
+            quadBufferInfo: this.quadBufferInfo,
+        });
+        this.swap('dyeTexture', 'dyeTempTexture');
     }
 
     fromImage() {
