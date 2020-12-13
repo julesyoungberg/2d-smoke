@@ -13,7 +13,6 @@ import { randomColor } from './util/color';
 import createUnitQuad2D from './util/createUnitQuad2D';
 import drawImage from './util/drawImage';
 import getResolution from './util/getResolution';
-import { containImage, fileObjToData } from './util/image';
 
 const advectShader = require('./shaders/advect.frag');
 const addForcesShader = require('./shaders/addForces.frag');
@@ -602,6 +601,7 @@ export default class FluidSimulator {
     }
 
     handleImageSource(imageTexture: WebGLTexture, width: number, height: number) {
+        console.log('received image source with dimensions:', width, height);
         this.setup();
         this.running = false;
 

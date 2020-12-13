@@ -1,11 +1,16 @@
 import * as twgl from 'twgl.js';
+import { swap } from './util';
+import { bindFramebufferWithTexture } from './util/bindFramebuffer';
+import convolveImage from './util/convolveImage';
 
-import drawImage from './util/drawImage';
 import { containImage, fileObjToData } from './util/image';
 
 export default class ImageSource {
     gl: WebGLRenderingContext;
     res: twgl.v3.Vec3;
+    framebuffer: WebGLFramebuffer;
+    imageTexture: WebGLTexture;
+    tempImageTexture: WebGLTexture;
     callback: (t: WebGLTexture, w: number, h: number) => void;
 
     constructor(
@@ -15,6 +20,8 @@ export default class ImageSource {
         this.gl = gl;
         this.callback = callback;
         this.uploadImage = this.uploadImage.bind(this);
+
+        this.framebuffer = gl.createFramebuffer();
     }
 
     setup(res: twgl.v3.Vec3) {
@@ -34,10 +41,20 @@ export default class ImageSource {
         );
         const canvas = await containImage(srcData, this.res[0] / 2, this.res[1] / 2);
         console.log('resulting dimensions: ', canvas.width, canvas.height);
-        const imageTexture = twgl.createTexture(this.gl, { src: canvas });
-        const tempImageTexture = twgl.createTexture(this.gl, { src: canvas });
+        this.imageTexture = twgl.createTexture(this.gl, { src: canvas });
+        this.tempImageTexture = twgl.createTexture(this.gl, { src: canvas });
 
-        this.callback(imageTexture, canvas.width, canvas.height);
+        bindFramebufferWithTexture(
+            this.gl,
+            this.framebuffer,
+            canvas.width,
+            canvas.height,
+            this.tempImageTexture
+        );
+        convolveImage(this.gl, { image: this.imageTexture, kernel: 'boxBlur' });
+        swap.bind(this)('imageTexture', 'tempImageTexture');
+
+        this.callback(this.imageTexture, canvas.width, canvas.height);
     }
 
     uploadImage() {
