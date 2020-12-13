@@ -1,5 +1,7 @@
 import * as twgl from 'twgl.js';
 
+import createModuleProg from './createModuleProg';
+
 const drawImageVert = `#version 300 es
 in vec4 position;
 out vec2 uv;
@@ -22,6 +24,8 @@ void main() {
 }
 `;
 
+const getProgramInfo = createModuleProg([drawImageVert, drawImageFrag]);
+
 export interface drawImageOptions {
     image: WebGLTexture;
     x: number;
@@ -35,7 +39,7 @@ export interface drawImageOptions {
 
 // based on: https://webgl2fundamentals.org/webgl/lessons/webgl-2d-drawimage.html
 export default function drawImage(gl: WebGLRenderingContext, opt: drawImageOptions) {
-    const programInfo = twgl.createProgramInfo(gl, [drawImageVert, drawImageFrag]);
+    const programInfo = getProgramInfo(gl);
     gl.useProgram(programInfo.program);
 
     // this matrix will convert from pixels to clip space

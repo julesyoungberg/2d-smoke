@@ -9,6 +9,7 @@ import { swap } from './util';
 import bindFramebuffer, { bindFramebufferWithTexture } from './util/bindFramebuffer';
 import buildTexture from './util/buildTexture';
 import { randomColor } from './util/color';
+import createUnitQuad2D from './util/createUnitQuad2D';
 import drawImage from './util/drawImage';
 import getResolution from './util/getResolution';
 import { containImage, fileObjToData } from './util/image';
@@ -95,12 +96,7 @@ export default class FluidSimulator {
             }
         });
 
-        this.quadBufferInfo = twgl.createBufferInfoFromArrays(gl, {
-            position: {
-                data: [-1, -1, -1, 1, 1, -1, 1, 1],
-                numComponents: 2,
-            },
-        });
+        this.quadBufferInfo = createUnitQuad2D(gl);
 
         this.curlTexture = gl.createTexture();
         this.divergenceTexture = gl.createTexture();
