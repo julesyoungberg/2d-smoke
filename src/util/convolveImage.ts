@@ -93,7 +93,7 @@ function getValidKernel(input: convolveImageOptions['kernel']) {
 }
 
 function computeKernelWeight(kernel) {
-    var weight = kernel.reduce(function (prev, curr) {
+    const weight = kernel.reduce((prev, curr) => {
         return prev + curr;
     });
     return weight <= 0 ? 1 : weight;
