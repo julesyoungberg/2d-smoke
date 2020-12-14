@@ -21,12 +21,12 @@ export default class ImageSource {
     private input: HTMLInputElement;
     private outputTexture: WebGLTexture;
     private res: number[];
-    
+
     private callback: (t: WebGLTexture, w: number, h: number) => void;
 
     /**
      * Creates a new ImageSource
-     * @param gl 
+     * @param gl
      * @param callback function to be called when there is a new image source available
      */
     constructor(
@@ -56,7 +56,7 @@ export default class ImageSource {
 
     /**
      * This function facilitates the uploading of an image.
-     * It expects a file input on the page wih ID below. 
+     * It expects a file input on the page wih ID below.
      * Attach this to a button on the page.
      */
     handler = () => {
@@ -92,7 +92,7 @@ export default class ImageSource {
 
     /**
      * Converts an uploaded image from file object to WebGL texture.
-     * @param e 
+     * @param e
      */
     private onUpload = async (e: InputEvent) => {
         const input = e.target as HTMLInputElement;

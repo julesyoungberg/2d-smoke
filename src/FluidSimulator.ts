@@ -640,7 +640,7 @@ export default class FluidSimulator {
             quadBufferInfo: this.quadBufferInfo,
         });
         this.swap('velocityTexture', 'simTexture');
-        
+
         this.bindSimFramebuffer();
         drawImage(this.gl, {
             image: imageTexture,
@@ -652,6 +652,6 @@ export default class FluidSimulator {
             destHeight: this.simRes[1],
             quadBufferInfo: this.quadBufferInfo,
         });
-        this.swap('temperatureTexture', 'simTexture'); 
+        this.swap('temperatureTexture', 'simTexture');
     }
 }

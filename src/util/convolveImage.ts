@@ -93,11 +93,11 @@ function getValidKernel(input: convolveImageOptions['kernel']) {
 }
 
 function computeKernelWeight(kernel) {
-    var weight = kernel.reduce(function(prev, curr) {
+    var weight = kernel.reduce(function (prev, curr) {
         return prev + curr;
     });
     return weight <= 0 ? 1 : weight;
-  }
+}
 
 export default function convolveImage(gl: WebGLRenderingContext, opt: convolveImageOptions) {
     const programInfo = getProgramInfo(gl);
@@ -107,6 +107,10 @@ export default function convolveImage(gl: WebGLRenderingContext, opt: convolveIm
 
     const bufferInfo = opt.quadBufferInfo || createUnitQuad2d(gl);
     twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo);
-    twgl.setUniforms(programInfo, { image: opt.image, kernel, kernelWeight: computeKernelWeight(kernel) });
+    twgl.setUniforms(programInfo, {
+        image: opt.image,
+        kernel,
+        kernelWeight: computeKernelWeight(kernel),
+    });
     twgl.drawBufferInfo(gl, bufferInfo, gl.TRIANGLE_STRIP);
 }
