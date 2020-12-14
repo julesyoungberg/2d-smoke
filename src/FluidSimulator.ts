@@ -85,9 +85,9 @@ export default class FluidSimulator {
         this.imageSource = new ImageSource(gl, this.handleImageSource.bind(this));
 
         // setup controls
-        gui.add({ PAUSE: this.toggleRunning.bind(this) }, 'PAUSE');
-        gui.add({ RESTART: this.reset.bind(this) }, 'RESTART');
-        gui.add({ FROM_IMAGE: this.imageSource.handler }, 'FROM_IMAGE');
+        gui.add({ 'Play / Pause': this.toggleRunning.bind(this) }, 'Play / Pause');
+        gui.add({ 'Restart': this.reset.bind(this) }, 'Restart');
+        gui.add({ 'From Image': this.imageSource.handler }, 'From Image');
         this.config = new FluidConfig(gui);
 
         document.addEventListener('keydown', (e: KeyboardEvent) => {
