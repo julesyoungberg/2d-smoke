@@ -1,3 +1,5 @@
+import * as twgl from 'twgl.js';
+
 const EXTENSIONS = ['EXT_color_buffer_float', 'OES_texture_float_linear'];
 const extensionRefs = {};
 
@@ -21,6 +23,9 @@ export default function createContext() {
             return undefined;
         }
     }
+
+    twgl.resizeCanvasToDisplaySize(gl.canvas as HTMLCanvasElement);
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
     return gl;
 }

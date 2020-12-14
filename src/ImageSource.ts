@@ -5,7 +5,7 @@ import convolveImage from './util/convolveImage';
 import { containImage, fileObjToData } from './util/image';
 
 /**
- * A class for uploading images into WebGL
+ * A class for uploading images into WebGL.
  * Usage:
  * const imageSource = new ImageSource(gl, drawImageToCanvas);
  * imageSource.setup([gl.canvas.width, gl.canvas.height], 'boxBlur');
@@ -31,7 +31,8 @@ export default class ImageSource {
      */
     constructor(
         gl: WebGLRenderingContext,
-        callback: (t: WebGLTexture, w: number, h: number) => void
+        callback: (t: WebGLTexture, w: number, h: number) => void,
+        readonly verbose: boolean = false
     ) {
         this.gl = gl;
         this.callback = callback;
@@ -101,7 +102,9 @@ export default class ImageSource {
         }
 
         const srcData = await fileObjToData(input.files[0]);
+        if (this.verbose) console.log('containing image within:', this.res.map(d => d / 2));
         this.canvas = await containImage(srcData, this.res[0] / 2, this.res[1] / 2);
+        if (this.verbose) console.log('resulting dimensions:', [this.canvas.width, this.canvas.height]);
         this.imageTexture = twgl.createTexture(this.gl, { src: this.canvas });
 
         this.process();

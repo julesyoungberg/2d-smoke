@@ -145,19 +145,9 @@ export default class FluidSimulator {
         const { simRes, dyeRes } = this;
         const numCells = simRes[0] * simRes[1];
 
-        const common = {
-            internalFormat: (this.gl as any).RGBA32F,
-            type: this.gl.FLOAT,
-            wrap: this.gl.CLAMP_TO_EDGE,
-        };
-
         const zeros = new Float32Array(numCells * 4).fill(0);
         const simDimensions = { width: simRes[0], height: simRes[1] };
-        const opt = {
-            ...simDimensions,
-            ...common,
-            src: zeros,
-        };
+        const opt = { ...simDimensions, src: zeros };
 
         buildTexture(this.gl, this.curlTexture, opt);
         buildTexture(this.gl, this.divergenceTexture, opt);
@@ -186,6 +176,8 @@ export default class FluidSimulator {
         this.imageSource.setup(this.dyeRes, 'boxBlur');
         this.simTexelSize = [1 / this.simRes[0], 1 / this.simRes[1]];
         this.dyeTexelSize = [1 / this.dyeRes[0], 1 / this.dyeRes[1]];
+        console.log('sim res:', this.simRes);
+        console.log('dye res:', this.dyeRes);
 
         this.update();
     }
@@ -606,12 +598,9 @@ export default class FluidSimulator {
     }
 
     // TODO
-    // - fix weird stretching in draw image
     // - improve velocity and temperature
     // - set special settings for the image mode
     handleImageSource(imageTexture: WebGLTexture, width: number, height: number) {
-        console.log('received image source with dimensions:', width, height);
-
         this.config.simMode = 'image';
         this.setup();
 

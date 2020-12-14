@@ -5,6 +5,7 @@ import createContext from './util/createContext';
 import FluidSimulator from './FluidSimulator';
 
 const gl = createContext();
+console.log('canvas dimensions:', [gl.canvas.width, gl.canvas.height]);
 const gui = new dat.GUI();
 
 const fluidSimulator = new FluidSimulator(gl, gui);
