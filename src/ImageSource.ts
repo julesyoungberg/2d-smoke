@@ -102,9 +102,14 @@ export default class ImageSource {
         }
 
         const srcData = await fileObjToData(input.files[0]);
-        if (this.verbose) console.log('containing image within:', this.res.map(d => d / 2));
+        if (this.verbose)
+            console.log(
+                'containing image within:',
+                this.res.map((d) => d / 2)
+            );
         this.canvas = await containImage(srcData, this.res[0] / 2, this.res[1] / 2);
-        if (this.verbose) console.log('resulting dimensions:', [this.canvas.width, this.canvas.height]);
+        if (this.verbose)
+            console.log('resulting dimensions:', [this.canvas.width, this.canvas.height]);
         this.imageTexture = twgl.createTexture(this.gl, { src: this.canvas });
 
         this.process();

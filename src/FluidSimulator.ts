@@ -86,7 +86,7 @@ export default class FluidSimulator {
 
         // setup controls
         gui.add({ 'Play / Pause': this.toggleRunning.bind(this) }, 'Play / Pause');
-        gui.add({ 'Restart': this.reset.bind(this) }, 'Restart');
+        gui.add({ Restart: this.reset.bind(this) }, 'Restart');
         gui.add({ 'From Image': this.imageSource.handler }, 'From Image');
         this.config = new FluidConfig(gui);
 
@@ -326,11 +326,11 @@ export default class FluidSimulator {
     }
 
     computeCurl() {
-        this.runSimProg(this.curlProgInfo, {
+        this.bindSimFramebuffer(this.curlTexture);
+        this.runProg(this.curlProgInfo, {
             texelSize: this.simTexelSize.slice(0, 2),
             velocity: this.velocityTexture,
         });
-        this.swap('curlTexture', 'simTexture');
     }
 
     enforceVorticity() {
@@ -511,21 +511,21 @@ export default class FluidSimulator {
         this.gl.disable(this.gl.BLEND);
 
         // this.diffuseVelocity();
-        this.addForces();
+        // this.addForces();
 
         if (this.config.vorticity > 0) {
             this.computeCurl();
             this.enforceVorticity();
         }
 
-        this.enforceVelocityBoundaries();
+        // this.enforceVelocityBoundaries();
 
         this.computeDivergence();
 
         this.clearPressureField();
         this.computePressureField();
 
-        this.enforcePressureBoundaries();
+        // this.enforcePressureBoundaries();
 
         this.subtractPressureGradient();
 

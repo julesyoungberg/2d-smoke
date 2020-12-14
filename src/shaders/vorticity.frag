@@ -24,6 +24,6 @@ void main() {
 
     vec2 velocity = texture(velocityField, uv).xy;
     velocity += force * dt;
-    velocity = min(max(velocity, -1000.0), 1000.0);
+    velocity = clamp(velocity, vec2(-1000.0), vec2(1000.0));
     fragColor = vec4(velocity, 0, 1);
 }

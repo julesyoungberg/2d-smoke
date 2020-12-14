@@ -8,20 +8,19 @@ const noise = makeNoise2D(Date.now());
 type ColorMode = 'rainbow' | 'static';
 type PointerMode = 'hand' | 'flame';
 type RenderMode = 'color' | 'dpt' | 'velocity';
-type SimMode = 'candel' | 'image';
+type SimMode = 'candel' | 'image' | 'simple';
 
 export default class FluidConfig {
     // texture resolutions
     simResolution = 128;
     dyeResolution = 512;
-    coputeResolution = 512;
 
     // fluid properties
     buoyancy = 1;
     buoyancyKappa = 0.25;
     buoyancySigma = 0.1;
     color = [100, 100, 100];
-    densityDissipation = 0.1;
+    densityDissipation = 1;
     gravity = 5;
     pressure = 0.8;
     // rest temperature of the fluid
@@ -29,9 +28,9 @@ export default class FluidConfig {
     // 15 for clouds
     restTemp = 10;
     temperatureDissipation = 0.05;
-    velocityDissipation = 0.01;
+    velocityDissipation = 0.2;
     viscosity = 0.101;
-    vorticity = 40;
+    vorticity = 30;
 
     // sim config
     colorMode: ColorMode = 'rainbow';
@@ -41,8 +40,8 @@ export default class FluidConfig {
     pointerMode: PointerMode = 'flame';
     pressureIterations = 50;
     renderMode: RenderMode = 'color';
-    simMode: SimMode = 'candel';
-    splatRadius = 0.2;
+    simMode: SimMode = 'simple';
+    splatRadius = 2.0;
     splatForce = 6000;
 
     constructor(gui: GUI) {
@@ -79,7 +78,7 @@ export default class FluidConfig {
         // advanced.add(this, 'viscosity', 0, 500);
 
         const controls = gui.addFolder('simulation');
-        controls.add(this, 'splatRadius', 0, 0.5);
+        controls.add(this, 'splatRadius', 0, 2.0);
         controls.add(this, 'splatForce', 0, 10000);
     }
 
