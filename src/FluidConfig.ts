@@ -8,7 +8,6 @@ const noise = makeNoise2D(Date.now());
 type ColorMode = 'rainbow' | 'static';
 type PointerMode = 'hand' | 'flame';
 type RenderMode = 'color' | 'dpt' | 'velocity';
-type SimMode = 'candel' | 'image' | 'simple';
 
 export default class FluidConfig {
     // texture resolutions
@@ -20,19 +19,20 @@ export default class FluidConfig {
     buoyancyKappa = 0.25;
     buoyancySigma = 0.1;
     color = [100, 100, 100];
-    densityDissipation = 1;
+    densityDissipation = 0.05;
     gravity = 5;
     pressure = 0.8;
     // rest temperature of the fluid
     // 10 for smok
     // 15 for clouds
     restTemp = 10;
-    temperatureDissipation = 0.05;
+    temperatureDissipation = 0.2;
     velocityDissipation = 0.2;
     viscosity = 0.101;
     vorticity = 30;
 
     // sim config
+    candle = true;
     colorMode: ColorMode = 'rainbow';
     colorRate = 5;
     colorOffset = 0;
@@ -40,8 +40,7 @@ export default class FluidConfig {
     pointerMode: PointerMode = 'flame';
     pressureIterations = 50;
     renderMode: RenderMode = 'color';
-    simMode: SimMode = 'simple';
-    splatRadius = 2.0;
+    splatRadius = 0.5;
     splatForce = 6000;
 
     constructor(gui: GUI) {
@@ -49,6 +48,7 @@ export default class FluidConfig {
 
         // gui.add(this, 'renderMode', ['color', 'velocity', 'dpt']);
         gui.add(this, 'pointerMode', ['hand', 'flame']);
+        gui.add(this, 'candle');
 
         const color = gui.addFolder('color');
         color.open();
@@ -70,12 +70,12 @@ export default class FluidConfig {
         fluid.add(this, 'temperatureDissipation', 0, 0.5);
         fluid.add(this, 'velocityDissipation', 0, 0.5);
 
-        // const advanced = fluid.addFolder('advanced');
-        // advanced.add(this, 'buoyancyKappa', 0, 1);
-        // advanced.add(this, 'buoyancySigma', 0, 1);
-        // advanced.add(this, 'pressure', 0, 1);
-        // advanced.add(this, 'restTemp', 0, 30);
-        // advanced.add(this, 'viscosity', 0, 500);
+        const advanced = fluid.addFolder('advanced');
+        advanced.add(this, 'buoyancyKappa', 0, 1);
+        advanced.add(this, 'buoyancySigma', 0, 1);
+        advanced.add(this, 'pressure', 0, 1);
+        advanced.add(this, 'restTemp', 0, 30);
+        advanced.add(this, 'viscosity', 0, 500);
 
         const controls = gui.addFolder('simulation');
         controls.add(this, 'splatRadius', 0, 2.0);
@@ -89,7 +89,7 @@ export default class FluidConfig {
     getCurrentColor() {
         const n = (noise(this.noiseX, 0) + 1) * 0.5;
         this.noiseX += this.colorRate / 40000;
-        return hsvToRgb((n + this.colorOffset) % 1, 0.8, 0.5).map((c) => c / 40);
+        return hsvToRgb((n * 3 + this.colorOffset) % 1, 0.8, 0.5).map((c) => c / 40);
     }
 
     getColor() {

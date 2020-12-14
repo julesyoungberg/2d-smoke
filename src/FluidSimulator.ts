@@ -18,7 +18,6 @@ const advectShader = require('./shaders/advect.frag');
 const addForcesShader = require('./shaders/addForces.frag');
 const basicFragShader = require('./shaders/basic.frag');
 const basicVertShader = require('./shaders/basic.vert');
-const boundaryShader = require('./shaders/boundary.frag');
 const clearShader = require('./shaders/clear.frag');
 const curlShader = require('./shaders/curl.frag');
 const divergenceShader = require('./shaders/divergence.frag');
@@ -51,7 +50,6 @@ export default class FluidSimulator {
     advectProgInfo: twgl.ProgramInfo;
     addForcesProgInfo: twgl.ProgramInfo;
     basicProgInfo: twgl.ProgramInfo;
-    boundaryProgInfo: twgl.ProgramInfo;
     clearProgInfo: twgl.ProgramInfo;
     curlProgInfo: twgl.ProgramInfo;
     divergenceProgInfo: twgl.ProgramInfo;
@@ -113,7 +111,6 @@ export default class FluidSimulator {
         this.advectProgInfo = twgl.createProgramInfo(gl, [basicVertShader, advectShader]);
         this.addForcesProgInfo = twgl.createProgramInfo(gl, [basicVertShader, addForcesShader]);
         this.basicProgInfo = twgl.createProgramInfo(gl, [basicVertShader, basicFragShader]);
-        this.boundaryProgInfo = twgl.createProgramInfo(gl, [basicVertShader, boundaryShader]);
         this.clearProgInfo = twgl.createProgramInfo(gl, [basicVertShader, clearShader]);
         this.curlProgInfo = twgl.createProgramInfo(gl, [basicVertShader, curlShader]);
         this.divergenceProgInfo = twgl.createProgramInfo(gl, [basicVertShader, divergenceShader]);
@@ -401,26 +398,6 @@ export default class FluidSimulator {
         this.swap('velocityTexture', 'simTexture');
     }
 
-    /**
-     * Enforce boundary conditions on a given field
-     */
-    enforceFieldBoundaries(x: WebGLTexture, scale: number) {
-        this.runSimProg(this.boundaryProgInfo, {
-            resolution: this.simRes.slice(0, 2),
-            texelSize: this.simTexelSize.slice(0, 2),
-            scale,
-            x,
-        });
-    }
-
-    enforceVelocityBoundaries() {
-        this.enforceFieldBoundaries(this.velocityTexture, -1);
-    }
-
-    enforcePressureBoundaries() {
-        this.enforceFieldBoundaries(this.pressureTexture, 1);
-    }
-
     scaleRadius(r: number) {
         const aspectRatio = this.gl.canvas.width / this.gl.canvas.height;
         if (aspectRatio > 1) {
@@ -498,7 +475,7 @@ export default class FluidSimulator {
         });
 
         // apply constant input
-        if (this.config.simMode === 'candel') {
+        if (this.config.candle) {
             this.splat(0.5, 0, 0, 2, this.config.getColor());
         }
     }
@@ -511,21 +488,17 @@ export default class FluidSimulator {
         this.gl.disable(this.gl.BLEND);
 
         // this.diffuseVelocity();
-        // this.addForces();
+        this.addForces();
 
         if (this.config.vorticity > 0) {
             this.computeCurl();
             this.enforceVorticity();
         }
 
-        // this.enforceVelocityBoundaries();
-
         this.computeDivergence();
 
         this.clearPressureField();
         this.computePressureField();
-
-        // this.enforcePressureBoundaries();
 
         this.subtractPressureGradient();
 
@@ -601,7 +574,7 @@ export default class FluidSimulator {
     // - improve velocity and temperature
     // - set special settings for the image mode
     handleImageSource(imageTexture: WebGLTexture, width: number, height: number) {
-        this.config.simMode = 'image';
+        this.config.candle = false;
         this.setup();
 
         this.bindDyeFramebuffer();
