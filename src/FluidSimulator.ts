@@ -87,7 +87,7 @@ export default class FluidSimulator {
         // setup controls
         gui.add({ PAUSE: this.toggleRunning.bind(this) }, 'PAUSE');
         gui.add({ RESTART: this.reset.bind(this) }, 'RESTART');
-        gui.add({ FROM_IMAGE: this.imageSource.uploadImage }, 'FROM_IMAGE');
+        gui.add({ FROM_IMAGE: this.imageSource.handler }, 'FROM_IMAGE');
         this.config = new FluidConfig(gui);
 
         document.addEventListener('keydown', (e: KeyboardEvent) => {
@@ -183,7 +183,7 @@ export default class FluidSimulator {
         // const rng = seedrandom(Math.random());
         // this.multipleSplats(rng() * 5 + 10, rng);
 
-        this.imageSource.setup(this.dyeRes);
+        this.imageSource.setup(this.dyeRes, 'boxBlur');
         this.simTexelSize = [1 / this.simRes[0], 1 / this.simRes[1]];
         this.dyeTexelSize = [1 / this.dyeRes[0], 1 / this.dyeRes[1]];
 

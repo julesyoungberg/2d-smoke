@@ -3,7 +3,7 @@ import * as twgl from 'twgl.js';
 import createModuleProg from './createModuleProg';
 import createUnitQuad2d from './createUnitQuad2D';
 
-const KERNELS = {
+export const KERNELS = {
     normal: [0, 0, 0, 0, 1, 0, 0, 0, 0],
     gaussianBlur: [0.045, 0.122, 0.045, 0.122, 0.332, 0.122, 0.045, 0.122, 0.045],
     gaussianBlur2: [1, 2, 1, 2, 4, 2, 1, 2, 1],
