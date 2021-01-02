@@ -23,6 +23,8 @@ const curlShader = require('./shaders/curl.frag');
 const divergenceShader = require('./shaders/divergence.frag');
 const dptShader = require('./shaders/dpt.frag');
 const jacobiShader = require('./shaders/jacobi.frag');
+const obstacleShader = require('./shaders/obstacle.frag');
+const renderShader = require('./shaders/render.frag');
 const splatShader = require('./shaders/splat.frag');
 const subtractShader = require('./shaders/subtract.frag');
 const textureShader = require('./shaders/texture.frag');
@@ -54,8 +56,10 @@ export default class FluidSimulator {
     curlProgInfo: twgl.ProgramInfo;
     divergenceProgInfo: twgl.ProgramInfo;
     jacobiProgInfo: twgl.ProgramInfo;
+    obstacleProgInfo: twgl.ProgramInfo;
     renderDptProgInfo: twgl.ProgramInfo;
     renderTextureProgInfo: twgl.ProgramInfo;
+    renderProgInfo: twgl.ProgramInfo;
     splatProgInfo: twgl.ProgramInfo;
     subtractProgInfo: twgl.ProgramInfo;
     vorticityProgInfo: twgl.ProgramInfo;
@@ -115,8 +119,10 @@ export default class FluidSimulator {
         this.curlProgInfo = twgl.createProgramInfo(gl, [basicVertShader, curlShader]);
         this.divergenceProgInfo = twgl.createProgramInfo(gl, [basicVertShader, divergenceShader]);
         this.jacobiProgInfo = twgl.createProgramInfo(gl, [basicVertShader, jacobiShader]);
+        this.obstacleProgInfo = twgl.createProgramInfo(gl, [basicVertShader, obstacleShader]);
         this.renderDptProgInfo = twgl.createProgramInfo(gl, [basicVertShader, dptShader]);
         this.renderTextureProgInfo = twgl.createProgramInfo(gl, [basicVertShader, textureShader]);
+        this.renderProgInfo = twgl.createProgramInfo(gl, [basicVertShader, renderShader]);
         this.splatProgInfo = twgl.createProgramInfo(gl, [basicVertShader, splatShader]);
         this.subtractProgInfo = twgl.createProgramInfo(gl, [basicVertShader, subtractShader]);
         this.vorticityProgInfo = twgl.createProgramInfo(gl, [basicVertShader, vorticityShader]);
@@ -264,6 +270,35 @@ export default class FluidSimulator {
             this.config.densityDissipation
         );
         this.swap('dyeTexture', 'dyeTempTexture');
+    }
+
+    runObstacleProg(scale: number, tex: WebGLTexture) {
+        const pointer = this.pointers.pointers[0];
+        this.runSimProg(this.obstacleProgInfo, {
+            obstaclePosition: [pointer.x * this.simRes[0], pointer.y * this.simRes[1]],
+            obstacleRadius: 3.0,
+            resolution: this.simRes,
+            scale,
+            tex,
+        });
+    }
+
+    enforceVelocityObstacle() {
+        if (!(this.config.pointerMode === 'obstacle' && this.pointers.pointers[0].down)) {
+            return;
+        }
+
+        this.runObstacleProg(-1.0, this.velocityTexture);
+        this.swap('velocityTexture', 'simTexture');
+    }
+
+    enforcePressureObstacle() {
+        if (!(this.config.pointerMode === 'obstacle' && this.pointers.pointers[0].down)) {
+            return;
+        }
+
+        this.runObstacleProg(1.0, this.pressureTexture);
+        this.swap('pressureTexture', 'simTexture');
     }
 
     /**
@@ -462,6 +497,15 @@ export default class FluidSimulator {
     }
 
     applyInputs() {
+        // apply constant input
+        if (this.config.candle) {
+            this.splat(0.5, 0, 0, 2, this.config.getColor());
+        }
+
+        if (this.config.pointerMode === 'obstacle') {
+            return;
+        }
+
         if (this.splatStack.length > 0) {
             const rng = seedrandom(Math.random());
             this.multipleSplats(this.splatStack.pop(), rng);
@@ -473,11 +517,6 @@ export default class FluidSimulator {
                 this.splatPointer(p);
             }
         });
-
-        // apply constant input
-        if (this.config.candle) {
-            this.splat(0.5, 0, 0, 2, this.config.getColor());
-        }
     }
 
     /**
@@ -489,6 +528,7 @@ export default class FluidSimulator {
 
         // this.diffuseVelocity();
         this.addForces();
+        this.enforceVelocityObstacle();
 
         if (this.config.vorticity > 0) {
             this.computeCurl();
@@ -499,8 +539,10 @@ export default class FluidSimulator {
 
         this.clearPressureField();
         this.computePressureField();
+        this.enforcePressureObstacle();
 
         this.subtractPressureGradient();
+        this.enforceVelocityObstacle();
 
         this.advectVelocity();
         this.advectTemperature();
@@ -550,6 +592,16 @@ export default class FluidSimulator {
         this.runProg(this.renderTextureProgInfo, { tex });
     }
 
+    render() {
+        const pointer = this.pointers.pointers[0];
+        this.runProg(this.renderProgInfo, {
+            obstaclePosition: [pointer.x * this.gl.canvas.width, pointer.y * this.gl.canvas.height],
+            obstacleRadius: 3.0 * (this.gl.canvas.width / this.simRes[0]),
+            renderObstacle: this.config.pointerMode === 'obstacle' && pointer.down,
+            dye: this.dyeTexture,
+        });
+    }
+
     /**
      * draw current state of simulation
      */
@@ -566,7 +618,7 @@ export default class FluidSimulator {
                 this.drawTexture(this.velocityTexture);
                 break;
             default:
-                this.drawTexture(this.dyeTexture);
+                this.render();
         }
     }
 

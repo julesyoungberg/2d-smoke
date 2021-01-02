@@ -6,7 +6,7 @@ import { hsvToRgb } from './util/color';
 const noise = makeNoise2D(Date.now());
 
 type ColorMode = 'rainbow' | 'static';
-type PointerMode = 'hand' | 'flame';
+type PointerMode = 'flame' | 'hand' | 'obstacle';
 type RenderMode = 'color' | 'dpt' | 'velocity';
 
 export default class FluidConfig {
@@ -47,7 +47,7 @@ export default class FluidConfig {
         this.colorOffset = Math.random();
 
         // gui.add(this, 'renderMode', ['color', 'velocity', 'dpt']);
-        gui.add(this, 'pointerMode', ['hand', 'flame']);
+        gui.add(this, 'pointerMode', ['flame', 'hand', 'obstacle']);
         gui.add(this, 'candle');
 
         const color = gui.addFolder('color');
